@@ -1,0 +1,26 @@
+# Rust/Engine
+engine/target/
+**/*.rs.bk
+
+# Lua
+lua-compact/src/*.o
+lua-compact/src/*.a
+lua-compact/src/lua
+lua-compact/src/luac
+
+# React Native/Mobile
+mobile/node_modules/
+mobile/.expo/
+mobile/npm-debug.*
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/*.orig.*
+mobile/web-build/
+
+# General
+.DS_Store
+.env
+*.log
