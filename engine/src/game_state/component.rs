@@ -67,6 +67,19 @@ impl GameState {
     pub fn add_collider(&mut self, collider: Collider) {
         self.colliders.push(collider);
     }
+
+    /// Destroy an entity
+    pub fn destroy_entity(&mut self, entity: Entity) {
+        // Remove from entities vector
+        if let Some(pos) = self.entities.iter().position(|&e| e == entity) {
+            self.entities.remove(pos);
+        }
+
+        // Remove all components associated with this entity
+        self.transforms.remove(&entity);
+        self.velocities.remove(&entity);
+        self.sprites.remove(&entity);
+    }
 }
 
 impl Velocity {

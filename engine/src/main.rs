@@ -25,11 +25,14 @@ fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
     Ok(())
 }
 
-fn setup(state: &mut GameState, lua: &Lua) -> Result<(), mlua::Error> {
-    // Create a test entity with basic components
-    let entity_id = state.create_entity();
-    state.add_transform(entity_id, Transform::new(400.0, 300.0, 0.0, 0.0, 1.0));
-    state.add_velocity(entity_id, Velocity::new(50.0, 30.0));
+fn setup(gamestate: Rc<RefCell<GameState>>, lua: &Lua) -> Result<(), mlua::Error> {
+    // Create a test entity with basic components inside a separate scope
+    {
+        let mut state = gamestate.borrow_mut();
+        let entity_id = state.create_entity();
+        state.add_transform(entity_id, Transform::new(400.0, 300.0, 0.0, 0.0, 1.0));
+        state.add_velocity(entity_id, Velocity::new(50.0, 30.0));
+    }
 
     // Load and run the initialization Lua script
     load_lua_script(lua, "resources/lua_scripts/example_script.lua")?;
@@ -39,24 +42,28 @@ fn setup(state: &mut GameState, lua: &Lua) -> Result<(), mlua::Error> {
     Ok(())
 }
 
-fn update(state: &mut GameState, lua: &Lua, delta_time: f32) -> Result<(), mlua::Error> {
+fn update(
+    gamestate: Rc<RefCell<GameState>>,
+    lua: &Lua,
+    delta_time: f32,
+) -> Result<(), mlua::Error> {
     // Call Lua update function
     call_on_frame(lua, delta_time)?;
 
     // Update physics/movement
-    movement_system(state);
+    movement_system(gamestate);
     Ok(())
 }
 
-fn render(state: &mut GameState, renderer: &mut Sdl2Renderer) {
+fn render(gamestate: Rc<RefCell<GameState>>, renderer: &mut Sdl2Renderer) {
     renderer.clear();
-    render_system(state, &mut renderer.canvas, 1.0);
+    render_system(&gamestate.borrow(), &mut renderer.canvas, 1.0);
     renderer.present();
 }
 
 fn main() -> LuaResult<()> {
     // Initialize Gamestate from component.rs
-    let mut gamestate = GameState::new();
+    let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
 
     // Create the SDL2Renderer
     let mut renderer = rendering::Sdl2Renderer::new("My Engine", 800, 600);
@@ -67,13 +74,12 @@ fn main() -> LuaResult<()> {
 
     // Set up lua
     let lua = Lua::new();
-    let gamestate_rc = Rc::new(RefCell::new(gamestate.clone()));
     register_entity_api(&lua, Rc::clone(&gamestate_rc))?;
     register_transform_api(&lua, Rc::clone(&gamestate_rc))?;
     register_renderable_api(&lua, Rc::clone(&gamestate_rc))?;
 
     // Run setup
-    setup(&mut gamestate, &lua)?;
+    setup(Rc::clone(&gamestate_rc), &lua)?;
 
     // Set up time
     let mut last_time = std::time::Instant::now();
@@ -99,10 +105,14 @@ fn main() -> LuaResult<()> {
         }
 
         // Update game state
-        update(&mut gamestate, &lua, delta_time)?;
+        {
+            update(Rc::clone(&gamestate_rc), &lua, delta_time)?;
+        }
 
         // Render
-        render(&mut gamestate, &mut renderer);
+        {
+            render(Rc::clone(&gamestate_rc), &mut renderer);
+        }
     }
 
     call_on_end(&lua)?;

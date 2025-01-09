@@ -2,6 +2,7 @@ pub mod component_api;
 pub mod entity_api;
 pub mod renderable_api;
 pub mod transform_api;
+pub mod state_manager;
 
 use mlua::{Function, Lua, Result as LuaResult};
 
