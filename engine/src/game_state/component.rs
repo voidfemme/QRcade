@@ -2,18 +2,21 @@ use crate::game_state::sprite::Sprite;
 use crate::game_state::transform::Transform;
 use std::collections::HashMap;
 
-type Entity = u32;
+pub type Entity = u32;
 
+#[derive(Clone, Copy)]
 pub struct Velocity {
     pub dx: f32,
     pub dy: f32,
 }
 
+#[derive(Clone, Copy)]
 pub struct Collider {
     pub width: f32,
     pub height: f32,
 }
 
+#[derive(Clone)]
 pub struct GameState {
     pub entities: Vec<Entity>,
     pub colliders: Vec<Collider>,

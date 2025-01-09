@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+fs = "0.0.5"
+futures = "0.3.31"
+futures-fs = "0.0.5"
 mlua = { version = "0.10.2", features = ["lua54"] }
+sdl2 = "0.37.0"

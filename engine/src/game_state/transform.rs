@@ -1,19 +1,20 @@
+#[derive(Clone, Copy)]
 pub struct Transform {
     pub x: f32,
     pub y: f32,
-    pub z: f32,
     pub rotation: f32,
-    pub scale: f32,
+    pub scale_x: f32,
+    pub scale_y: f32,
 }
 
 impl Transform {
-    pub fn new(x: f32, y: f32, z: f32, rotation: f32, scale: f32) -> Self {
+    pub fn new(x: f32, y: f32, rotation: f32, scale_x: f32, scale_y: f32) -> Self {
         Self {
             x,
             y,
-            z,
             rotation,
-            scale,
+            scale_x,
+            scale_y,
         }
     }
 
