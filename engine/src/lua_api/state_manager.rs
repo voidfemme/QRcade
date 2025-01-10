@@ -1,6 +1,6 @@
-use crate::game_state::component::GameState;
-use crate::game_state::systems::collision_system::CollisionSystem;
-use crate::game_state::systems::input_system::InputSystem;
+use crate::ecs::component::GameState;
+use crate::ecs::systems::collision_system::CollisionSystem;
+use crate::ecs::systems::input_system::InputSystem;
 use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -48,7 +48,7 @@ impl StateManager {
             Ok(mut state) => {
                 state.add_transform(
                     entity_id,
-                    crate::game_state::transform::Transform::new(x, y, rotation, scale_x, scale_y),
+                    crate::ecs::transform::Transform::new(x, y, rotation, scale_x, scale_y),
                 );
                 Ok(())
             }
@@ -67,8 +67,7 @@ impl StateManager {
     ) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
-                let sprite =
-                    crate::game_state::sprite::Sprite::new_rectangle(width, height, r, g, b);
+                let sprite = crate::ecs::sprite::Sprite::new_rectangle(width, height, r, g, b);
                 state.add_sprite(entity_id, sprite);
                 Ok(())
             }

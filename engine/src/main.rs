@@ -1,11 +1,12 @@
+mod ecs;
 mod engine;
-mod game_state;
 mod lua_api;
+
+use crate::ecs::systems::rendering::render_system;
 use crate::engine::rendering::Renderer;
-use crate::game_state::systems::rendering::render_system;
+use ecs::component::GameState;
+use ecs::systems::movement_system::movement_system;
 use engine::rendering::Sdl2Renderer;
-use game_state::component::GameState;
-use game_state::systems::movement_system::movement_system;
 use lua_api::collision_api::register_collision_api;
 use lua_api::entity_api::register_entity_api;
 use lua_api::input_api::register_input_api;
@@ -28,7 +29,7 @@ fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
     Ok(())
 }
 
-fn setup(state_manager: Rc<StateManager>, lua: &Lua) -> Result<(), mlua::Error> {
+fn setup(_state_manager: Rc<StateManager>, lua: &Lua) -> Result<(), mlua::Error> {
     // Load and run the initialization Lua script
     load_lua_script(lua, "resources/lua_scripts/example_script.lua")?;
 
