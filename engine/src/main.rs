@@ -9,6 +9,7 @@ use lua_api::renderable_api::register_renderable_api;
 use lua_api::state_manager::StateManager;
 use lua_api::transform_api::register_transform_api;
 use lua_api::{call_on_end, call_on_frame, call_on_start};
+use lua_api::input_api::register_input_api;
 use mlua::{Lua, Result as LuaResult};
 use rendering::{render_system, Sdl2Renderer};
 use sdl2::event::Event;
@@ -68,6 +69,7 @@ fn main() -> LuaResult<()> {
     register_entity_api(&lua, Rc::clone(&state_manager))?;
     register_transform_api(&lua, Rc::clone(&state_manager))?;
     register_renderable_api(&lua, Rc::clone(&state_manager))?;
+    register_input_api(&lua, Rc::clone(&state_manager))?;
 
     // Run setup
     setup(Rc::clone(&state_manager), &lua)?;
