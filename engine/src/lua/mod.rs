@@ -1,10 +1,5 @@
-pub mod component_api;
-pub mod entity_api;
-pub mod renderable_api;
-pub mod transform_api;
-pub mod state_manager;
-pub mod input_api;
-pub mod collision_api;
+pub mod api;
+pub mod runtime;
 
 use mlua::{Function, Lua, Result as LuaResult};
 

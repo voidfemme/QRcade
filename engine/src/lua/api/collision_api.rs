@@ -1,4 +1,4 @@
-use crate::lua_api::state_manager::StateManager;
+use crate::lua::runtime::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult};
 use std::rc::Rc;
 

@@ -1,4 +1,4 @@
-use crate::lua_api::state_manager::StateManager;
+use crate::lua::runtime::state_manager::StateManager;
 use std::rc::Rc;
 
 pub fn movement_system(state_manager: Rc<StateManager>) {
@@ -29,4 +29,3 @@ pub fn movement_system(state_manager: Rc<StateManager>) {
         }
     }
 }
-

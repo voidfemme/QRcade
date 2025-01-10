@@ -1,5 +1,5 @@
 use crate::engine::rendering::{Renderer, Sdl2Renderer};
-use crate::lua_api::state_manager::StateManager;
+use crate::lua::runtime::state_manager::StateManager;
 // use sdl2::pixels::Color;
 // use sdl2::rect::Rect;
 // use sdl2::render::Canvas;
