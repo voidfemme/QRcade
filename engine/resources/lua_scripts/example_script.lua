@@ -1,14 +1,14 @@
--- Create two rectangles: one player-controlled and one stationary
+-- Create two shapes: one player-controlled and one stationary
 function on_start()
-    -- Player rectangle (red) - controlled by arrow keys
+    -- Player shape (red) - controlled by arrow keys
     local player = create_entity()  
     set_transform(player, 100, 300, 0, 1.0, 1.0)
-    add_rectangle(player, 50, 50, 255, 0, 0)  -- Red square
+    add_shape(player, "square", 255, 0, 0)  -- Red square using built-in asset
 
-    -- Stationary rectangle (blue) - acts as a "goal"
+    -- Stationary shape (blue) - acts as a "goal"
     local goal = create_entity()
     set_transform(goal, 500, 300, 0, 1.0, 1.0)
-    add_rectangle(goal, 60, 60, 0, 0, 255)  -- Blue square
+    add_shape(goal, "circle", 0, 0, 255)  -- Blue square using built-in asset
 end
 
 -- Handle movement and collision checking every frame
@@ -40,11 +40,11 @@ function on_frame(delta_time)
     -- Check for collision and change player color
     if is_colliding(player, goal) then
         -- Turn player green when colliding
-        add_rectangle(player, 50, 50, 0, 255, 0)
+        add_shape(player, "square", 0, 255, 0)
         print("Collision detected!")
     else
         -- Return to red when not colliding
-        add_rectangle(player, 50, 50, 255, 0, 0)
+        add_shape(player, "square", 255, 0, 0)
     end
 end
 

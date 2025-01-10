@@ -1,3 +1,4 @@
+use crate::assets::asset_manager::{AssetManager, BuiltInAsset};
 use crate::ecs::components::component::GameState;
 use crate::ecs::systems::collision_system::CollisionSystem;
 use crate::ecs::systems::input_system::InputSystem;
@@ -8,6 +9,7 @@ use std::rc::Rc;
 pub struct StateManager {
     pub state: Rc<RefCell<GameState>>,
     input: RefCell<InputSystem>,
+    assets: AssetManager,
 }
 
 impl StateManager {
@@ -15,6 +17,7 @@ impl StateManager {
         Self {
             state,
             input: RefCell::new(InputSystem::new()),
+            assets: AssetManager::new(),
         }
     }
 
@@ -69,7 +72,8 @@ impl StateManager {
     ) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
-                let sprite = crate::ecs::components::sprite::Sprite::new_rectangle(width, height, r, g, b);
+                let sprite =
+                    crate::ecs::components::sprite::Sprite::new_rectangle(width, height, r, g, b);
                 state.add_sprite(entity_id, sprite);
                 Ok(())
             }
@@ -88,6 +92,10 @@ impl StateManager {
             }
             Err(_) => Err("Failed to borrow game state"),
         }
+    }
+
+    pub fn get_asset(&self, name: &str) -> Option<&BuiltInAsset> {
+        self.assets.get_by_name(name)
     }
 
     pub fn handle_key(&self, keycode: Keycode, pressed: bool) -> Result<(), &'static str> {

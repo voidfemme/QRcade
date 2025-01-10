@@ -1,6 +1,7 @@
 mod ecs;
 mod engine;
 mod lua;
+mod assets;
 
 use crate::ecs::systems::rendering::render_system;
 use crate::engine::rendering::Renderer;
