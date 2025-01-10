@@ -91,7 +91,22 @@ fn main() -> LuaResult<()> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => running = false, // Handle Escape key
-
+                Event::KeyDown {
+                    keycode: Some(code),
+                    ..
+                } => {
+                    state_manager
+                        .handle_key(code, true)
+                        .unwrap_or_else(|e| println!("Error handling keydown: {}", e));
+                }
+                Event::KeyUp {
+                    keycode: Some(code),
+                    ..
+                } => {
+                    state_manager
+                        .handle_key(code, false)
+                        .unwrap_or_else(|e| println!("Error handling keyup: {}", e));
+                }
                 _ => {}
             }
         }

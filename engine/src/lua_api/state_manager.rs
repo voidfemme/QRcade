@@ -1,14 +1,20 @@
 use crate::game_state::component::GameState;
+use crate::game_state::systems::input_system::InputSystem;
+use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct StateManager {
     pub state: Rc<RefCell<GameState>>,
+    input: RefCell<InputSystem>,
 }
 
 impl StateManager {
     pub fn new(state: Rc<RefCell<GameState>>) -> Self {
-        Self { state }
+        Self {
+            state,
+            input: RefCell::new(InputSystem::new()),
+        }
     }
 
     pub fn create_entity(&self) -> Result<u32, &'static str> {
@@ -79,6 +85,27 @@ impl StateManager {
                 }
             }
             Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn handle_key(&self, keycode: Keycode, pressed: bool) -> Result<(), &'static str> {
+        match self.input.try_borrow_mut() {
+            Ok(mut input) => {
+                if pressed {
+                    input.set_key_pressed(keycode);
+                } else {
+                    input.set_key_released(keycode);
+                }
+                Ok(())
+            }
+            Err(_) => Err("Failed to borrow input system"),
+        }
+    }
+
+    pub fn is_key_pressed(&self, keycode: Keycode) -> Result<bool, &'static str> {
+        match self.input.try_borrow() {
+            Ok(input) => Ok(input.is_key_pressed(keycode)),
+            Err(_) => Err("Failed to borrow input system")
         }
     }
 
