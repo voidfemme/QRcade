@@ -4,7 +4,7 @@ mod lua_api;
 
 use crate::ecs::systems::rendering::render_system;
 use crate::engine::rendering::Renderer;
-use ecs::component::GameState;
+use ecs::components::component::GameState;
 use ecs::systems::movement_system::movement_system;
 use engine::rendering::Sdl2Renderer;
 use lua_api::collision_api::register_collision_api;

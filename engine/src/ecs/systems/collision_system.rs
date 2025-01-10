@@ -1,6 +1,6 @@
-use crate::ecs::component::GameState;
-use crate::ecs::sprite::Sprite;
-use crate::ecs::transform::Transform;
+use crate::ecs::components::component::GameState;
+use crate::ecs::components::sprite::Sprite;
+use crate::ecs::components::transform::Transform;
 
 pub struct CollisionSystem;
 

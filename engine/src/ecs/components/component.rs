@@ -1,14 +1,9 @@
-use crate::ecs::sprite::Sprite;
-use crate::ecs::transform::Transform;
+use crate::ecs::components::sprite::Sprite;
+use crate::ecs::components::transform::Transform;
+use crate::ecs::components::velocity::Velocity;
 use std::collections::HashMap;
 
 pub type Entity = u32;
-
-#[derive(Clone, Copy)]
-pub struct Velocity {
-    pub dx: f32,
-    pub dy: f32,
-}
 
 #[derive(Clone, Copy)]
 pub struct Collider {
@@ -79,16 +74,5 @@ impl GameState {
         self.transforms.remove(&entity);
         self.velocities.remove(&entity);
         self.sprites.remove(&entity);
-    }
-}
-
-impl Velocity {
-    pub fn new(dx: f32, dy: f32) -> Self {
-        Self { dx, dy }
-    }
-
-    pub fn set_velocity(&mut self, dx: f32, dy: f32) {
-        self.dx = dx;
-        self.dy = dy;
     }
 }
