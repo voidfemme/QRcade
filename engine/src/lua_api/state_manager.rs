@@ -81,4 +81,25 @@ impl StateManager {
             Err(_) => Err("Failed to borrow game state"),
         }
     }
+
+    pub fn debug_print_entities(&self) -> Result<(), &'static str> {
+        if let Ok(state) = self.state.try_borrow() {
+            println!("\nEntity Debug Info:");
+            for entity in &state.entities {
+                println!("Entity {}: ", entity);
+                if let Some(transform) = state.transforms.get(entity) {
+                    println!("  Transform: ({}, {})", transform.x, transform.y);
+                }
+                if let Some(sprite) = state.sprites.get(entity) {
+                    println!(
+                        "  Sprite: {}x{} RGB({}, {}, {})",
+                        sprite.width, sprite.height, sprite.color.0, sprite.color.1, sprite.color.2
+                    );
+                }
+            }
+            Ok(())
+        } else {
+            Err("Failed to borrow game state")
+        }
+    }
 }

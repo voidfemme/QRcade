@@ -26,19 +26,6 @@ fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
 }
 
 fn setup(state_manager: Rc<StateManager>, lua: &Lua) -> Result<(), mlua::Error> {
-    // Create a test entity with basic components inside a separate scope
-    let entity_id = state_manager
-        .create_entity()
-        .map_err(mlua::Error::runtime)?;
-
-    state_manager
-        .set_transform(entity_id, 400.0, 300.0, 0.0, 0.0, 1.0)
-        .map_err(mlua::Error::runtime)?;
-
-    // Note: You'll need to add a set_velocity method to StateManager if you want to keep this
-    // state_manager.set_velocity(entity_id, 50.0, 30.0)
-    //      .map_err(mlua::Error::runtime)?;
-
     // Load and run the initialization Lua script
     load_lua_script(lua, "resources/lua_scripts/example_script.lua")?;
 
@@ -84,6 +71,7 @@ fn main() -> LuaResult<()> {
 
     // Run setup
     setup(Rc::clone(&state_manager), &lua)?;
+    state_manager.debug_print_entities().unwrap();
 
     // Set up time
     let mut last_time = std::time::Instant::now();
