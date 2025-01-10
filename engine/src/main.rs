@@ -1,18 +1,19 @@
+mod engine;
 mod game_state;
 mod lua_api;
-
+use crate::engine::rendering::Renderer;
+use crate::game_state::systems::rendering::render_system;
+use engine::rendering::Sdl2Renderer;
 use game_state::component::GameState;
 use game_state::systems::movement_system::movement_system;
-use game_state::systems::rendering;
+use lua_api::collision_api::register_collision_api;
 use lua_api::entity_api::register_entity_api;
 use lua_api::input_api::register_input_api;
 use lua_api::renderable_api::register_renderable_api;
 use lua_api::state_manager::StateManager;
 use lua_api::transform_api::register_transform_api;
-use lua_api::collision_api::register_collision_api;
 use lua_api::{call_on_end, call_on_frame, call_on_start};
 use mlua::{Lua, Result as LuaResult};
-use rendering::{render_system, Sdl2Renderer};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
@@ -47,7 +48,7 @@ fn update(state_manager: Rc<StateManager>, lua: &Lua, delta_time: f32) -> Result
 
 fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer) {
     renderer.clear();
-    render_system(state_manager, &mut renderer.canvas, 1.0);
+    render_system(state_manager, renderer, 1.0);
     renderer.present();
 }
 
@@ -59,7 +60,7 @@ fn main() -> LuaResult<()> {
     let state_manager = Rc::new(StateManager::new(Rc::clone(&gamestate_rc)));
 
     // Create the SDL2Renderer
-    let mut renderer = rendering::Sdl2Renderer::new("My Engine", 800, 600);
+    let mut renderer = Sdl2Renderer::new("My Engine", 800, 600);
 
     // Create an SDL event pump for handling input
     let sdl_context = &renderer.sdl_context;
