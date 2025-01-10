@@ -4,6 +4,7 @@ pub mod renderable_api;
 pub mod transform_api;
 pub mod state_manager;
 pub mod input_api;
+pub mod collision_api;
 
 use mlua::{Function, Lua, Result as LuaResult};
 

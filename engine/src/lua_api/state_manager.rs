@@ -1,4 +1,5 @@
 use crate::game_state::component::GameState;
+use crate::game_state::systems::collision_system::CollisionSystem;
 use crate::game_state::systems::input_system::InputSystem;
 use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
@@ -105,7 +106,14 @@ impl StateManager {
     pub fn is_key_pressed(&self, keycode: Keycode) -> Result<bool, &'static str> {
         match self.input.try_borrow() {
             Ok(input) => Ok(input.is_key_pressed(keycode)),
-            Err(_) => Err("Failed to borrow input system")
+            Err(_) => Err("Failed to borrow input system"),
+        }
+    }
+
+    pub fn check_collision(&self, entity1: u32, entity2: u32) -> Result<bool, &'static str> {
+        match self.state.try_borrow() {
+            Ok(state) => CollisionSystem::are_entities_colliding(&state, entity1, entity2),
+            Err(_) => Err("Failed to borrow game state"),
         }
     }
 

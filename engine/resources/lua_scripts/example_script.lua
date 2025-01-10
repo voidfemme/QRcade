@@ -1,32 +1,51 @@
--- Create two entities with different colors and behaviors
+-- Create two rectangles: one player-controlled and one stationary
 function on_start()
-    -- Create a red rectangle that moves horizontally
-    local red = create_entity()  
-    set_transform(red, 200, 300, 0, 1.0, 1.0)
-    add_rectangle(red, 50, 50, 255, 0, 0)
+    -- Player rectangle (red) - controlled by arrow keys
+    local player = create_entity()  
+    set_transform(player, 100, 300, 0, 1.0, 1.0)
+    add_rectangle(player, 50, 50, 255, 0, 0)  -- Red square
 
-    -- Create a blue rectangle that moves in a circle
-    local blue = create_entity()
-    set_transform(blue, 400, 300, 0, 1.0, 1.0)
-    add_rectangle(blue, 30, 30, 0, 0, 255)
+    -- Stationary rectangle (blue) - acts as a "goal"
+    local goal = create_entity()
+    set_transform(goal, 500, 300, 0, 1.0, 1.0)
+    add_rectangle(goal, 60, 60, 0, 0, 255)  -- Blue square
 end
 
--- Move the entities every frame
+-- Handle movement and collision checking every frame
 function on_frame(delta_time)
-    -- Move red rectangle left to right
-    local red = 1
-    local x, y, rotation = get_transform(red)
-    set_transform(red, x + 100 * delta_time, y, rotation, 1.0, 1.0)
-
-    -- Move blue rectangle in a circle
-    local blue = 2
-    local bx, by, brot = get_transform(blue)
-    local radius = 100
-    local angular_speed = 2  -- radians per second
-    local angle = (brot + angular_speed * delta_time) % (2 * math.pi)
-    local circle_x = 400 + radius * math.cos(angle)
-    local circle_y = 300 + radius * math.sin(angle)
-    set_transform(blue, circle_x, circle_y, angle, 1.0, 1.0)
+    local player = 1  -- First entity we created
+    local goal = 2    -- Second entity we created
+    
+    -- Get player position
+    local x, y, rotation = get_transform(player)
+    
+    -- Move player with arrow keys
+    local speed = 200  -- Pixels per second
+    if is_key_pressed("RIGHT") then
+        x = x + speed * delta_time
+    end
+    if is_key_pressed("LEFT") then
+        x = x - speed * delta_time
+    end
+    if is_key_pressed("UP") then
+        y = y - speed * delta_time
+    end
+    if is_key_pressed("DOWN") then
+        y = y + speed * delta_time
+    end
+    
+    -- Update player position
+    set_transform(player, x, y, rotation, 1.0, 1.0)
+    
+    -- Check for collision and change player color
+    if is_colliding(player, goal) then
+        -- Turn player green when colliding
+        add_rectangle(player, 50, 50, 0, 255, 0)
+        print("Collision detected!")
+    else
+        -- Return to red when not colliding
+        add_rectangle(player, 50, 50, 255, 0, 0)
+    end
 end
 
 function on_end()
