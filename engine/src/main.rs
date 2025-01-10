@@ -1,12 +1,12 @@
 mod game_state;
 mod lua_api;
 
-use game_state::component::{GameState, Velocity};
+use game_state::component::GameState;
 use game_state::systems::movement_system::movement_system;
 use game_state::systems::rendering;
-use game_state::transform::Transform;
 use lua_api::entity_api::register_entity_api;
 use lua_api::renderable_api::register_renderable_api;
+use lua_api::state_manager::StateManager;
 use lua_api::transform_api::register_transform_api;
 use lua_api::{call_on_end, call_on_frame, call_on_start};
 use mlua::{Lua, Result as LuaResult};
@@ -25,14 +25,19 @@ fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
     Ok(())
 }
 
-fn setup(gamestate: Rc<RefCell<GameState>>, lua: &Lua) -> Result<(), mlua::Error> {
+fn setup(state_manager: Rc<StateManager>, lua: &Lua) -> Result<(), mlua::Error> {
     // Create a test entity with basic components inside a separate scope
-    {
-        let mut state = gamestate.borrow_mut();
-        let entity_id = state.create_entity();
-        state.add_transform(entity_id, Transform::new(400.0, 300.0, 0.0, 0.0, 1.0));
-        state.add_velocity(entity_id, Velocity::new(50.0, 30.0));
-    }
+    let entity_id = state_manager
+        .create_entity()
+        .map_err(mlua::Error::runtime)?;
+
+    state_manager
+        .set_transform(entity_id, 400.0, 300.0, 0.0, 0.0, 1.0)
+        .map_err(mlua::Error::runtime)?;
+
+    // Note: You'll need to add a set_velocity method to StateManager if you want to keep this
+    // state_manager.set_velocity(entity_id, 50.0, 30.0)
+    //      .map_err(mlua::Error::runtime)?;
 
     // Load and run the initialization Lua script
     load_lua_script(lua, "resources/lua_scripts/example_script.lua")?;
@@ -42,28 +47,27 @@ fn setup(gamestate: Rc<RefCell<GameState>>, lua: &Lua) -> Result<(), mlua::Error
     Ok(())
 }
 
-fn update(
-    gamestate: Rc<RefCell<GameState>>,
-    lua: &Lua,
-    delta_time: f32,
-) -> Result<(), mlua::Error> {
+fn update(state_manager: Rc<StateManager>, lua: &Lua, delta_time: f32) -> Result<(), mlua::Error> {
     // Call Lua update function
     call_on_frame(lua, delta_time)?;
 
     // Update physics/movement
-    movement_system(gamestate);
+    movement_system(state_manager);
     Ok(())
 }
 
-fn render(gamestate: Rc<RefCell<GameState>>, renderer: &mut Sdl2Renderer) {
+fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer) {
     renderer.clear();
-    render_system(&gamestate.borrow(), &mut renderer.canvas, 1.0);
+    render_system(state_manager, &mut renderer.canvas, 1.0);
     renderer.present();
 }
 
 fn main() -> LuaResult<()> {
     // Initialize Gamestate from component.rs
     let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
+
+    // Create a single StateManager instance
+    let state_manager = Rc::new(StateManager::new(Rc::clone(&gamestate_rc)));
 
     // Create the SDL2Renderer
     let mut renderer = rendering::Sdl2Renderer::new("My Engine", 800, 600);
@@ -74,12 +78,12 @@ fn main() -> LuaResult<()> {
 
     // Set up lua
     let lua = Lua::new();
-    register_entity_api(&lua, Rc::clone(&gamestate_rc))?;
-    register_transform_api(&lua, Rc::clone(&gamestate_rc))?;
-    register_renderable_api(&lua, Rc::clone(&gamestate_rc))?;
+    register_entity_api(&lua, Rc::clone(&state_manager))?;
+    register_transform_api(&lua, Rc::clone(&state_manager))?;
+    register_renderable_api(&lua, Rc::clone(&state_manager))?;
 
     // Run setup
-    setup(Rc::clone(&gamestate_rc), &lua)?;
+    setup(Rc::clone(&state_manager), &lua)?;
 
     // Set up time
     let mut last_time = std::time::Instant::now();
@@ -106,12 +110,12 @@ fn main() -> LuaResult<()> {
 
         // Update game state
         {
-            update(Rc::clone(&gamestate_rc), &lua, delta_time)?;
+            update(Rc::clone(&state_manager), &lua, delta_time)?;
         }
 
         // Render
         {
-            render(Rc::clone(&gamestate_rc), &mut renderer);
+            render(Rc::clone(&state_manager), &mut renderer);
         }
     }
 

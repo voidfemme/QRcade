@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct StateManager {
-    state: Rc<RefCell<GameState>>,
+    pub state: Rc<RefCell<GameState>>,
 }
 
 impl StateManager {
@@ -60,7 +60,8 @@ impl StateManager {
     ) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
-                let sprite = crate::game_state::sprite::Sprite::new_rectangle(width, height, r, g, b);
+                let sprite =
+                    crate::game_state::sprite::Sprite::new_rectangle(width, height, r, g, b);
                 state.add_sprite(entity_id, sprite);
                 Ok(())
             }

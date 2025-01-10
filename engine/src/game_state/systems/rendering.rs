@@ -1,9 +1,10 @@
-use crate::GameState;
+use crate::lua_api::state_manager::StateManager;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::Sdl;
+use std::rc::Rc;
 
 pub fn draw_scaled_rect(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
@@ -44,28 +45,31 @@ pub fn draw_scaled_rect(
 }
 
 pub fn render_system(
-    game_state: &GameState,
+    state_manager: Rc<StateManager>,
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     scale: f32,
 ) {
-    canvas.set_draw_color(sdl2::pixels::Color::BLACK);
-    canvas.clear();
+    // Try to borrow the state for reading
+    if let Ok(state) = state_manager.state.try_borrow() {
+        canvas.set_draw_color(sdl2::pixels::Color::BLACK);
+        canvas.clear();
 
-    for (&entity, transform) in &game_state.transforms {
-        if let Some(sprite) = game_state.sprites.get(&entity) {
-            // Use actual sprite dimensions and color
-            draw_scaled_rect(
-                canvas,
-                transform.x as i32,
-                transform.y as i32,
-                sprite.width as u32,
-                sprite.height as u32,
-                scale,
-                sprite.color,
-                true, // Enable debug visualization
-            );
-        } else {
-            println!("Warning: Entity {} has transform but no sprite", entity);
+        for (&entity, transform) in &state.transforms {
+            if let Some(sprite) = state.sprites.get(&entity) {
+                // Use actual sprite dimensions and color
+                draw_scaled_rect(
+                    canvas,
+                    transform.x as i32,
+                    transform.y as i32,
+                    sprite.width as u32,
+                    sprite.height as u32,
+                    scale,
+                    sprite.color,
+                    true, // Enable debug visualization
+                );
+            } else {
+                println!("Warning: Entity {} has transform but no sprite", entity);
+            }
         }
     }
 }

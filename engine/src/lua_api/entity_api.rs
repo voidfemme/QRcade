@@ -1,12 +1,8 @@
 use super::state_manager::StateManager;
-use crate::game_state::component::GameState;
 use mlua::{Lua, Result as LuaResult};
-use std::cell::RefCell;
 use std::rc::Rc;
 
-pub fn register_entity_api(lua: &Lua, gamestate: Rc<RefCell<GameState>>) -> LuaResult<()> {
-    let state_manager = Rc::new(StateManager::new(gamestate));
-
+pub fn register_entity_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
     // create_entity
     let create_entity = {
         let manager = Rc::clone(&state_manager);

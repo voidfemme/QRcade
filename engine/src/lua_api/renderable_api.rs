@@ -1,12 +1,8 @@
 use super::state_manager::StateManager;
-use crate::GameState;
 use mlua::{Lua, Result as LuaResult};
-use std::cell::RefCell;
 use std::rc::Rc;
 
-pub fn register_renderable_api(lua: &Lua, gamestate: Rc<RefCell<GameState>>) -> LuaResult<()> {
-    let state_manager = Rc::new(StateManager::new(gamestate));
-
+pub fn register_renderable_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
     let add_rectangle = {
         let manager = Rc::clone(&state_manager);
         lua.create_function(
@@ -22,4 +18,3 @@ pub fn register_renderable_api(lua: &Lua, gamestate: Rc<RefCell<GameState>>) -> 
     println!("Registered add_rectangle function");
     Ok(())
 }
-
