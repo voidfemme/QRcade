@@ -147,6 +147,29 @@ impl Renderer for Sdl2Renderer {
             .unwrap();
     }
 
+    fn draw_triangle(
+        &mut self,
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        x3: i32,
+        y3: i32,
+        color: Color,
+    ) {
+        let canvas = &mut self.canvas;
+        canvas.set_draw_color(color);
+        canvas
+            .draw_line(Point::new(x1, y1), Point::new(x2, y2))
+            .unwrap();
+        canvas
+            .draw_line(Point::new(x2, y2), Point::new(x3, y3))
+            .unwrap();
+        canvas
+            .draw_line(Point::new(x3, y3), Point::new(x1, y1))
+            .unwrap();
+    }
+
     fn draw_bounding_box(&mut self, x: i32, y: i32, width: u32, height: u32, color: Color) {
         // Adjust position to align with bottom right
         let half_w = width as i32 / 2;

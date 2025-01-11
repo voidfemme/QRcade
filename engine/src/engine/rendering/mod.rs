@@ -24,6 +24,7 @@ pub trait Renderer {
     fn draw_circle(&mut self, center_x: i32, center_y: i32, radius: u32, color: Color);
     fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color);
     fn draw_bounding_box(&mut self, x: i32, y: i32, width: u32, height: u32, color: Color);
+    fn draw_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32, color: Color);
 }
 
 // Re-export SDL renderer implementation
