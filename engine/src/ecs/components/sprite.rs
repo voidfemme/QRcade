@@ -26,4 +26,26 @@ impl Sprite {
             color: (r, g, b),
         }
     }
+    pub fn new_triangle(
+        r: u8,
+        g: u8,
+        b: u8,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+    ) -> Self {
+        Self {
+            asset_name: "triangle".to_string(),
+            color: (r, g, b),
+        }
+    }
+    pub fn new_line(r: u8, g: u8, b: u8, x: f32, y: f32) -> Self {
+        Self {
+            asset_name: "line".to_string(),
+            color: (r, g, b),
+        }
+    }
 }
