@@ -5,29 +5,24 @@
 
 #[derive(Clone)]
 pub struct Sprite {
-    pub width: f32,
-    pub height: f32,
-    pub color: (u8, u8, u8), // RGB color
+    pub asset_name: String,  // Reference to the built-in asset this sprite uses
+    pub color: (u8, u8, u8), // The sprite's current color, allowing for customization
 }
 
 impl Sprite {
-    pub fn new(width: f32, height: f32, r: u8, g: u8, b: u8) -> Self {
+    // Create a new sprite from an asset
+    pub fn new(asset_name: &str, r: u8, g: u8, b: u8) -> Self {
         Self {
-            width,
-            height,
+            asset_name: asset_name.to_string(),
             color: (r, g, b),
-            // other fields if needed
         }
     }
 
-    // pub fn set_texture(&mut self, texture_id: &str) {
-    //     self.texture_id = texture_id.to_string();
-    // }
-
+    // For backward compatibility, create a rectangle sprite
     pub fn new_rectangle(width: f32, height: f32, r: u8, g: u8, b: u8) -> Self {
+        // We'll need to make sure "rectangle" is a valid asset name in our asset system
         Self {
-            width,
-            height,
+            asset_name: "square".to_string(), // Using our built-in square asset
             color: (r, g, b),
         }
     }

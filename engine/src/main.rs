@@ -1,20 +1,15 @@
+mod assets;
 mod ecs;
 mod engine;
 mod lua;
-mod assets;
 
-use crate::ecs::systems::rendering::render_system;
-use crate::engine::rendering::Renderer;
-use ecs::components::component::GameState;
-use ecs::systems::movement_system::movement_system;
-use engine::rendering::Sdl2Renderer;
-use lua::api::collision_api::register_collision_api;
-use lua::api::entity_api::register_entity_api;
-use lua::api::input_api::register_input_api;
-use lua::api::renderable_api::register_renderable_api;
-use lua::api::transform_api::register_transform_api;
-use lua::runtime::state_manager::StateManager;
-use lua::{call_on_end, call_on_frame, call_on_start};
+use ecs::{movement_system, render_system, GameState};
+use engine::rendering::{Renderer, Sdl2Renderer};
+use lua::{
+    call_on_end, call_on_frame, call_on_start, register_collision_api, register_entity_api,
+    register_input_api, register_renderable_api, register_transform_api, StateManager,
+};
+
 use mlua::{Lua, Result as LuaResult};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;

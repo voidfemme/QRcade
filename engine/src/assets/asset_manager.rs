@@ -1,6 +1,8 @@
+use crate::engine::rendering::{Renderer, Sdl2Renderer};
 use sdl2::pixels::Color;
 
 // Define the different types of primitive shapes the engine supports
+#[derive(Debug)]
 pub enum PrimitiveShape {
     Rectangle { width: f32, height: f32 },
     Circle { radius: f32 },
@@ -41,6 +43,10 @@ impl AssetManager {
                 id: 1,
             },
         ];
+        println!("Initialized AssetManager with assets:");
+        for asset in &assets {
+            println!("  - Asset '{}' (ID: {})", asset.name, asset.id);
+        }
 
         Self { assets }
     }
@@ -48,5 +54,16 @@ impl AssetManager {
     pub fn get_by_name(&self, name: &str) -> Option<&BuiltInAsset> {
         // Look through our vector of assets for one with a matching name
         self.assets.iter().find(|asset| asset.name == name)
+    }
+
+    pub fn render_asset(&self, asset: &BuiltInAsset, x: i32, y: i32, renderer: &mut Sdl2Renderer) {
+        match asset.shape {
+            PrimitiveShape::Rectangle { width, height } => {
+                renderer.draw_rect(x, y, width as u32, height as u32, asset.color);
+            }
+            PrimitiveShape::Circle { radius } => {
+                renderer.draw_circle(x, y, radius as u32, asset.color);
+            }
+        }
     }
 }

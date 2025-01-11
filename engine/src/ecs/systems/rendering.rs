@@ -1,10 +1,5 @@
 use crate::engine::rendering::{Renderer, Sdl2Renderer};
 use crate::lua::runtime::state_manager::StateManager;
-// use sdl2::pixels::Color;
-// use sdl2::rect::Rect;
-// use sdl2::render::Canvas;
-// use sdl2::video::Window;
-// use sdl2::Sdl;
 use std::rc::Rc;
 
 pub fn render_system(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer, scale: f32) {
@@ -12,16 +7,25 @@ pub fn render_system(state_manager: Rc<StateManager>, renderer: &mut Sdl2Rendere
     if let Ok(state) = state_manager.state.try_borrow() {
         for (&entity, transform) in &state.transforms {
             if let Some(sprite) = state.sprites.get(&entity) {
-                // Use actual sprite dimensions and color
-                renderer.draw_scaled_rect(
-                    transform.x as i32,
-                    transform.y as i32,
-                    sprite.width as u32,
-                    sprite.height as u32,
-                    scale,
-                    sprite.color,
-                    true, // Enable debug visualization
+                println!(
+                    "Rendering entity {} with asset '{}'",
+                    entity, sprite.asset_name
                 );
+
+                // Get the asset definition from the state manager
+                if let Some(asset) = state_manager.get_asset(&sprite.asset_name) {
+                    println!("Found asset, shape type: {:?}", asset.shape);
+
+                    // Let the asset system handle the rendering based on the shape type
+                    state_manager.render_asset(
+                        asset,
+                        transform.x as i32,
+                        transform.y as i32,
+                        sprite.color,
+                        renderer,
+                        scale,
+                    );
+                }
             } else {
                 println!("Warning: Entity {} has transform but no sprite", entity);
             }
