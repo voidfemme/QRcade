@@ -1,8 +1,13 @@
-use crate::engine::rendering::{Renderer, Sdl2Renderer};
+use crate::engine::rendering::Sdl2Renderer;
 use crate::lua::runtime::state_manager::StateManager;
 use std::rc::Rc;
 
-pub fn render_system(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer, scale: f32) {
+pub fn render_system(
+    state_manager: Rc<StateManager>,
+    renderer: &mut Sdl2Renderer,
+    scale: f32,
+    debug: bool,
+) {
     // Try to borrow the state for reading
     if let Ok(state) = state_manager.state.try_borrow() {
         for (&entity, transform) in &state.transforms {
@@ -19,11 +24,13 @@ pub fn render_system(state_manager: Rc<StateManager>, renderer: &mut Sdl2Rendere
                     // Let the asset system handle the rendering based on the shape type
                     state_manager.render_asset(
                         asset,
+                        sprite.shape_data.as_ref(),
                         transform.x as i32,
                         transform.y as i32,
                         sprite.color,
                         renderer,
                         scale,
+                        debug,
                     );
                 }
             } else {

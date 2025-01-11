@@ -1,5 +1,6 @@
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::component::GameState;
+use crate::ecs::components::sprite::SpriteShapeData;
 use crate::ecs::systems::collision_system::CollisionSystem;
 use crate::ecs::systems::input_system::InputSystem;
 use crate::{Renderer, Sdl2Renderer};
@@ -46,16 +47,12 @@ impl StateManager {
         x: f32,
         y: f32,
         rotation: f32,
-        scale_x: f32,
-        scale_y: f32,
     ) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
                 state.add_transform(
                     entity_id,
-                    crate::ecs::components::transform::Transform::new(
-                        x, y, rotation, scale_x, scale_y,
-                    ),
+                    crate::ecs::components::transform::Transform::new(x, y, rotation),
                 );
                 Ok(())
             }
@@ -70,66 +67,63 @@ impl StateManager {
         r: u8,
         g: u8,
         b: u8,
-    ) -> Result<(), &'static str> {
-        // First verify the asset exists
-        if self.get_asset(asset_name).is_none() {
-            return Err("Asset not found");
-        }
-
-        match self.state.try_borrow_mut() {
-            Ok(mut state) => {
-                // Create a sprite that references our asset
-                let sprite = crate::ecs::components::sprite::Sprite::new(asset_name, r, g, b);
-                state.add_sprite(entity_id, sprite);
-                Ok(())
-            }
-            Err(_) => Err("Failed to borrow game state"),
-        }
-    }
-
-    pub fn add_sprite_with_params(
-        &self,
-        entity_id: u32,
-        asset_name: &str,
-        r: u8,
-        g: u8,
-        b: u8,
         params: Option<mlua::Table>,
     ) -> Result<(), &'static str> {
-        // First verify that the asset exists
         let asset = self.get_asset(asset_name).ok_or("Asset not found")?;
 
-        // Handle shape-specific parameters
         let sprite = match &asset.shape {
-            PrimitiveShape::Triangle { .. } => {
+            PrimitiveShape::Rectangle { width, height } => {
                 if let Some(params) = params {
-                    // For triangles, we want to allow custom vertices
-                    let x1: f32 = params.get("x1").unwrap_or(0.0);
-                    let y1: f32 = params.get("y1").unwrap_or(-16.0);
-                    let x2: f32 = params.get("x2").unwrap_or(-16.0);
-                    let y2: f32 = params.get("y2").unwrap_or(16.0);
-                    let x3: f32 = params.get("x3").unwrap_or(16.0);
-                    let y3: f32 = params.get("y3").unwrap_or(16.0);
-
-                    crate::ecs::components::sprite::Sprite::new_triangle(
-                        r, g, b, x1, y1, x2, y2, x3, y3,
+                    let new_width: f32 = params.get("width").unwrap_or(*width);
+                    let new_height: f32 = params.get("height").unwrap_or(*height);
+                    crate::ecs::components::sprite::Sprite::new_rectangle(
+                        new_width, new_height, r, g, b,
                     )
                 } else {
-                    crate::ecs::components::sprite::Sprite::new(asset_name, r, g, b)
+                    crate::ecs::components::sprite::Sprite::new(asset_name, r, g, b, None)
                 }
             }
-            PrimitiveShape::Line { .. } => {
+            PrimitiveShape::Circle { radius } => {
                 if let Some(params) = params {
-                    // For lines, we might want to allow custom end points
-                    let x2: f32 = params.get("x2").unwrap_or(32.0);
-                    let y2: f32 = params.get("y2").unwrap_or(0.0);
-
-                    crate::ecs::components::sprite::Sprite::new_line(r, g, b, x2, y2)
+                    let new_radius: f32 = params.get("radius").unwrap_or(*radius);
+                    crate::ecs::components::sprite::Sprite::new_circle(new_radius, r, g, b)
                 } else {
-                    crate::ecs::components::sprite::Sprite::new(asset_name, r, g, b)
+                    crate::ecs::components::sprite::Sprite::new(asset_name, r, g, b, None)
                 }
             }
-            _ => crate::ecs::components::sprite::Sprite::new(asset_name, r, g, b),
+            PrimitiveShape::Triangle {
+                x1,
+                y1,
+                x2,
+                y2,
+                x3,
+                y3,
+            } => {
+                if let Some(params) = params {
+                    let nx1: f32 = params.get("x1").unwrap_or(*x1);
+                    let ny1: f32 = params.get("y1").unwrap_or(*y1);
+                    let nx2: f32 = params.get("x2").unwrap_or(*x2);
+                    let ny2: f32 = params.get("y2").unwrap_or(*y2);
+                    let nx3: f32 = params.get("x3").unwrap_or(*x3);
+                    let ny3: f32 = params.get("y3").unwrap_or(*y3);
+                    crate::ecs::components::sprite::Sprite::new_triangle(
+                        r, g, b, nx1, ny1, nx2, ny2, nx3, ny3,
+                    )
+                } else {
+                    crate::ecs::components::sprite::Sprite::new_triangle(
+                        r, g, b, *x1, *y1, *x2, *y2, *x3, *y3,
+                    )
+                }
+            }
+            PrimitiveShape::Line { x2, y2 } => {
+                if let Some(params) = params {
+                    let nx2: f32 = params.get("x2").unwrap_or(*x2);
+                    let ny2: f32 = params.get("y2").unwrap_or(*y2);
+                    crate::ecs::components::sprite::Sprite::new_line(r, g, b, nx2, ny2)
+                } else {
+                    crate::ecs::components::sprite::Sprite::new_line(r, g, b, *x2, *y2)
+                }
+            }
         };
 
         match self.state.try_borrow_mut() {
@@ -140,7 +134,6 @@ impl StateManager {
             Err(_) => Err("Failed to borrow game state"),
         }
     }
-
     pub fn get_transform(&self, entity_id: u32) -> Result<(f32, f32, f32), &'static str> {
         match self.state.try_borrow() {
             Ok(state) => {
@@ -201,26 +194,42 @@ impl StateManager {
     pub fn render_asset(
         &self,
         asset: &BuiltInAsset,
+        shape_data: Option<&SpriteShapeData>,
         x: i32,
         y: i32,
         color: (u8, u8, u8),
         renderer: &mut Sdl2Renderer,
         scale: f32,
+        debug: bool,
     ) {
         match &asset.shape {
             PrimitiveShape::Rectangle { width, height } => {
-                renderer.draw_scaled_rect(
+                let (final_width, final_height) = if let Some(SpriteShapeData::Rectangle {
+                    width: w,
+                    height: h,
+                }) = shape_data
+                {
+                    (*w, *h)
+                } else {
+                    (*width, *height)
+                };
+
+                renderer.draw_rect(
                     x,
                     y,
-                    (*width * scale) as u32,
-                    (*height * scale) as u32,
-                    scale,
-                    color,
-                    true, // Keep debug visualization on
+                    (final_width * scale) as u32,
+                    (final_height * scale) as u32,
+                    Color::RGB(color.0, color.1, color.2),
                 );
             }
             PrimitiveShape::Circle { radius } => {
-                let scaled_radius = (*radius * scale) as u32;
+                // Use custom radius if provided
+                let final_radius = if let Some(SpriteShapeData::Circle { radius: r }) = shape_data {
+                    *r
+                } else {
+                    *radius
+                };
+                let scaled_radius = (final_radius * scale) as u32;
                 renderer.draw_circle(
                     x + scaled_radius as i32,
                     y + scaled_radius as i32,
@@ -228,11 +237,8 @@ impl StateManager {
                     Color::RGB(color.0, color.1, color.2),
                 );
 
-                // If debug visualization is enabled, we might want to draw
-                // a bounding box around the Circle
-                if true {
-                    // Debug visualization
-                    let diameter = *radius * 2.0 * scale;
+                if debug {
+                    let diameter = final_radius * 2.0 * scale;
                     renderer.draw_bounding_box(
                         x + (diameter as i32 / 2),
                         y + (diameter as i32 / 2),
@@ -251,20 +257,23 @@ impl StateManager {
                 y3,
             } => {
                 let color = Color::RGB(color.0, color.1, color.2);
+                // Use custom vertices if provided
+                let vertices = if let Some(SpriteShapeData::Triangle { vertices }) = shape_data {
+                    vertices
+                } else {
+                    &[(*x1, *y1), (*x2, *y2), (*x3, *y3)]
+                };
 
-                // Scale and offset the vertices
-                let sx1 = x + (*x1 * scale) as i32;
-                let sy1 = y + (*y1 * scale) as i32;
-                let sx2 = x + (*x2 * scale) as i32;
-                let sy2 = y + (*y2 * scale) as i32;
-                let sx3 = x + (*x3 * scale) as i32;
-                let sy3 = y + (*y3 * scale) as i32;
+                let sx1 = x + (vertices[0].0 * scale) as i32;
+                let sy1 = y + (vertices[0].1 * scale) as i32;
+                let sx2 = x + (vertices[1].0 * scale) as i32;
+                let sy2 = y + (vertices[1].1 * scale) as i32;
+                let sx3 = x + (vertices[2].0 * scale) as i32;
+                let sy3 = y + (vertices[2].1 * scale) as i32;
 
                 renderer.draw_triangle(sx1, sy1, sx2, sy2, sx3, sy3, color);
 
-                // Debug visualization
-                if true {
-                    // Draw bounding box
+                if debug {
                     let min_x = sx1.min(sx2).min(sx3);
                     let max_x = sx1.max(sx2).max(sx3);
                     let min_y = sy1.min(sy2).min(sy3);
@@ -281,16 +290,19 @@ impl StateManager {
             }
             PrimitiveShape::Line { x2, y2 } => {
                 let color = Color::RGB(color.0, color.1, color.2);
+                // Use custom line endpoint if provided
+                let end = if let Some(SpriteShapeData::Line { end }) = shape_data {
+                    end
+                } else {
+                    &(*x2, *y2)
+                };
 
-                // The start point is at (x,y), the end point is offset by (x2,y2)
-                let end_x = x + (*x2 * scale) as i32;
-                let end_y = y + (*y2 * scale) as i32;
+                let end_x = x + (end.0 * scale) as i32;
+                let end_y = y + (end.1 * scale) as i32;
 
                 renderer.draw_line(x, y, end_x, end_y, color);
 
-                // Debug visualization
-                if true {
-                    // Draw bounding box encompassing the line
+                if debug {
                     let min_x = x.min(end_x);
                     let max_x = x.max(end_x);
                     let min_y = y.min(end_y);

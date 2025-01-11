@@ -1,5 +1,5 @@
 use crate::lua::runtime::state_manager::StateManager;
-use mlua::{Lua, Result as LuaResult};
+use mlua::{Lua, Table, Result as LuaResult};
 use std::rc::Rc;
 
 pub fn register_renderable_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
@@ -7,10 +7,18 @@ pub fn register_renderable_api(lua: &Lua, state_manager: Rc<StateManager>) -> Lu
     let add_shape = {
         let manager = Rc::clone(&state_manager);
         lua.create_function(
-            move |_, (entity_id, shape_name, r, g, b): (u32, String, u8, u8, u8)| {
+            move |_,
+                  (entity_id, shape_name, r, g, b, params): (
+                u32,
+                String,
+                u8,
+                u8,
+                u8,
+                Option<Table>,
+            )| {
                 // We can now directly add the sprite using the asset name
                 manager
-                    .add_sprite(entity_id, &shape_name, r, g, b)
+                    .add_sprite(entity_id, &shape_name, r, g, b, params)
                     .map_err(mlua::Error::runtime)
             },
         )?

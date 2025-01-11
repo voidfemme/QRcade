@@ -17,6 +17,24 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 
+struct EngineConfig {
+    debug_mode: bool,
+    window_width: u32,
+    window_height: u32,
+    window_title: &'static str,
+}
+
+impl Default for EngineConfig {
+    fn default() -> Self {
+        Self {
+            debug_mode: false,
+            window_width: 800,
+            window_height: 600,
+            window_title: "My Engine",
+        }
+    }
+}
+
 fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
     let script_content = fs::read(filepath)
         .map_err(|e| mlua::Error::external(format!("Failed to read file: {}", e)))?;
@@ -43,27 +61,35 @@ fn update(state_manager: Rc<StateManager>, lua: &Lua, delta_time: f32) -> Result
     Ok(())
 }
 
-fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer) {
+fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer, debug: bool) {
     renderer.clear();
-    render_system(state_manager, renderer, 1.0);
+    render_system(state_manager, renderer, 1.0, debug);
     renderer.present();
 }
 
 fn main() -> LuaResult<()> {
-    // Initialize Gamestate from component.rs
-    let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
+    // Create engine configuration
+    let config = EngineConfig {
+        debug_mode: std::env::var("DEBUG").is_ok(),
+        ..Default::default()
+    };
 
-    // Create a single StateManager instance
+    // Initialize Gamestate with debug mode
+    let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
     let state_manager = Rc::new(StateManager::new(Rc::clone(&gamestate_rc)));
 
-    // Create the SDL2Renderer
-    let mut renderer = Sdl2Renderer::new("My Engine", 800, 600);
+    // Create the renderer with configurations
+    let mut renderer = Sdl2Renderer::new(
+        config.window_title,
+        config.window_width,
+        config.window_height,
+    );
 
     // Create an SDL event pump for handling input
     let sdl_context = &renderer.sdl_context;
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    // Set up lua
+    // Set up lua environment
     let lua = Lua::new();
     register_entity_api(&lua, Rc::clone(&state_manager))?;
     register_transform_api(&lua, Rc::clone(&state_manager))?;
@@ -73,7 +99,9 @@ fn main() -> LuaResult<()> {
 
     // Run setup
     setup(Rc::clone(&state_manager), &lua)?;
-    state_manager.debug_print_entities().unwrap();
+    if config.debug_mode {
+        state_manager.debug_print_entities().unwrap();
+    }
 
     // Set up time
     let mut last_time = std::time::Instant::now();
@@ -120,7 +148,7 @@ fn main() -> LuaResult<()> {
 
         // Render
         {
-            render(Rc::clone(&state_manager), &mut renderer);
+            render(Rc::clone(&state_manager), &mut renderer, config.debug_mode);
         }
     }
 
