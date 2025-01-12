@@ -10,6 +10,45 @@ pub fn render_system(
 ) {
     // Try to borrow the state for reading
     if let Ok(state) = state_manager.state.try_borrow() {
+        // First render tilemaps (they should be in the background)
+        for (&entity, tilemap) in &state.tilemaps {
+            println!("Rendering tilemap for entity {}", entity);
+            
+            // Get tilemap dimensions
+            let tile_size = tilemap.tile_size;
+            
+            // Render each tile
+            for y in 0..tilemap.height {
+                for x in 0..tilemap.width {
+                    if let Some(tile) = tilemap.get_tile(x, y) {
+                        // Create a square asset for each tile
+                        if let Some(asset) = state_manager.get_asset("square") {
+                            let x_pos = (x * tile_size) as i32;
+                            let y_pos = (y * tile_size) as i32;
+                            
+                            // Render the tile using the square asset with explicit size
+                            let shape_data = Some(crate::ecs::components::sprite::SpriteShapeData::Rectangle {
+                                width: tile_size as f32,
+                                height: tile_size as f32,
+                            });
+                            
+                            state_manager.render_asset(
+                                asset,
+                                shape_data.as_ref(),
+                                x_pos,
+                                y_pos,
+                                tile.color,
+                                renderer,
+                                scale,
+                                debug,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // Then render sprites (they should be on top of tilemaps)
         for (&entity, transform) in &state.transforms {
             if let Some(sprite) = state.sprites.get(&entity) {
                 println!(

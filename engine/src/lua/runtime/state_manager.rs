@@ -1,7 +1,7 @@
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::component::GameState;
 use crate::ecs::components::sprite::SpriteShapeData;
-use crate::ecs::components::tilemap::{Tile, Tilemap};
+use crate::ecs::components::tilemap::{Tile, Tilemap, TilemapQuery, TilemapQueryResult};
 use crate::ecs::components::velocity::Velocity;
 use crate::ecs::systems::collision_system::CollisionSystem;
 use crate::ecs::systems::input_system::InputSystem;
@@ -46,6 +46,23 @@ impl StateManager {
                 // Add tilemap to state
                 state.tilemaps.insert(entity_id, tilemap);
                 Ok(())
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn query_tilemap(
+        &self,
+        entity_id: u32,
+        query: TilemapQuery,
+    ) -> Result<TilemapQueryResult, &'static str> {
+        match self.state.try_borrow() {
+            Ok(state) => {
+                let tilemap = state
+                    .tilemaps
+                    .get(&entity_id)
+                    .ok_or("No tilemap found for entity")?;
+                tilemap.query(query)
             }
             Err(_) => Err("Failed to borrow game state"),
         }

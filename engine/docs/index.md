@@ -9,3 +9,4 @@ Welcome to the game engine docs! Explore the API:
 - [Input API](input_api.md)
 - [Collision API](collision_api.md)
 - [Tilemap API](tilemap_api.md)
+- [Script Callback Functions](script_callbacks.md)
