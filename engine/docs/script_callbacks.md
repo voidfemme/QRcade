@@ -1,4 +1,6 @@
 # Script Callback Functions
+[Back to Index](index.md)
+
 The QRcade Game Engine looks for specific callback functions in your Lua scripts.
 Defining these functions allows the engine to properly initialize, update, and finalize
 your game logic. The engine automatically calls these functions at the appropriate
