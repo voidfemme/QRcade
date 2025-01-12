@@ -1,4 +1,5 @@
 # Collision API
+[Back to Index](index.md)
 The `collision_api` checks for interactions between entities.
 
 ## Functions
