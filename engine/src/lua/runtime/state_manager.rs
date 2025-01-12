@@ -1,6 +1,7 @@
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::component::GameState;
 use crate::ecs::components::sprite::SpriteShapeData;
+use crate::ecs::components::tilemap::{Tile, Tilemap};
 use crate::ecs::components::velocity::Velocity;
 use crate::ecs::systems::collision_system::CollisionSystem;
 use crate::ecs::systems::input_system::InputSystem;
@@ -25,6 +26,102 @@ impl StateManager {
         }
     }
 
+    pub fn create_tilemap(
+        &self,
+        entity_id: u32,
+        width: u32,
+        height: u32,
+        tile_size: u32,
+    ) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                // Check if entity exists
+                if !state.entities.contains(&entity_id) {
+                    return Err("Entity does not exist");
+                }
+
+                // Create new tilemap
+                let tilemap = Tilemap::new(width, height, tile_size);
+
+                // Add tilemap to state
+                state.tilemaps.insert(entity_id, tilemap);
+                Ok(())
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn set_tile(
+        &self,
+        entity_id: u32,
+        x: u32,
+        y: u32,
+        tile_id: u32,
+        walkable: bool,
+        color: (u8, u8, u8),
+    ) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                // Get tilemap for entity
+                let tilemap = state
+                    .tilemaps
+                    .get_mut(&entity_id)
+                    .ok_or("No tilemap found for entity")?;
+
+                // Create new tile
+                let tile = Tile {
+                    tile_id,
+                    walkable,
+                    color,
+                };
+
+                // Set tile in tilemap
+                tilemap.set_tile(x, y, tile)
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn clear_tile(&self, entity_id: u32, x: u32, y: u32) -> Result<bool, &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                // Get tilemap for entity
+                let tilemap = state
+                    .tilemaps
+                    .get_mut(&entity_id)
+                    .ok_or("No tilemap found for entity")?;
+
+                // Return walkable status
+                Ok(tilemap.is_walkable(x, y))
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn get_tilemap(&self, entity_id: u32) -> Result<Option<Tilemap>, &'static str> {
+        match self.state.try_borrow() {
+            Ok(state) => Ok(state.tilemaps.get(&entity_id).cloned()),
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn is_tile_walkable(&self, entity_id: u32, x: u32, y: u32) -> Result<bool, &'static str> {
+        match self.state.try_borrow() {
+            Ok(state) => {
+                // Get tilemap for entity
+                let tilemap = state
+                    .tilemaps
+                    .get(&entity_id)
+                    .ok_or("No tilemap found for entity")?;
+
+                // Return walkable status
+                Ok(tilemap.is_walkable(x, y))
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    // Add this to debug_print_entities to show tilemap information
     pub fn set_velocity(&self, entity_id: u32, vx: f32, vy: f32) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
@@ -341,6 +438,23 @@ impl StateManager {
                     );
                 }
             }
+        }
+    }
+
+    pub fn debug_print_tilemap(&self, entity_id: u32) -> Result<(), &'static str> {
+        if let Ok(state) = self.state.try_borrow() {
+            if let Some(tilemap) = state.tilemaps.get(&entity_id) {
+                println!("Tilemap for Entity {}:", entity_id);
+                println!("  Size: {}x{}", tilemap.width, tilemap.height);
+                println!("  Tile size: {}", tilemap.tile_size);
+                println!("  Total tiles: {}", tilemap.tiles.len());
+
+                let occupied_tiles = tilemap.tiles.iter().filter(|tile| tile.is_some()).count();
+                println!("  Occupied tiles: {}", occupied_tiles);
+            }
+            Ok(())
+        } else {
+            Err("Failed to borrow game state")
         }
     }
 

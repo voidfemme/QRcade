@@ -1,6 +1,4 @@
-use crate::ecs::components::sprite::Sprite;
-use crate::ecs::components::transform::Transform;
-use crate::ecs::components::velocity::Velocity;
+use super::{sprite::Sprite, tilemap::Tilemap, transform::Transform, velocity::Velocity};
 use std::collections::HashMap;
 
 pub type Entity = u32;
@@ -18,7 +16,8 @@ pub struct GameState {
     pub transforms: HashMap<Entity, Transform>,
     pub velocities: HashMap<Entity, Velocity>,
     pub sprites: HashMap<Entity, Sprite>,
-    // etc. for each component type
+    pub tilemaps: HashMap<u32, Tilemap>,
+    next_entity_id: u32,
 }
 
 // ------------------------
@@ -32,6 +31,8 @@ impl GameState {
             transforms: HashMap::new(),
             velocities: HashMap::new(),
             sprites: HashMap::new(),
+            tilemaps: HashMap::new(),
+            next_entity_id: 0,
         }
     }
 
