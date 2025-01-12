@@ -8,6 +8,9 @@ QRcade is an experimental game engine that loads games from QR codes. It uses Lu
 - Basic 2D rendering with SDL2
 - Debug visualization tools
 
+## Lua Documentation
+[Lua Docs](engine/docs/index.md)
+
 ## Project Status
 This project is in early development stages.
 
