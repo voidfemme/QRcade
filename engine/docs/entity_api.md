@@ -1,8 +1,10 @@
 # Entity API
 
+[Back to Index](index.md)
+
 Entities are the fundamental building blocks of the game world. Use the `entity_api` to create and manage them.
 
-## **Functions**
+## Functions
 
 ### `create_entity()`
 

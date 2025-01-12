@@ -1,8 +1,10 @@
 # Transform API
 
+[Back to Index](index.md)
+
 The `transform_api` allows you to control the position, rotation and scale of entities.
 
-## **Functions**
+## Functions
 
 ### `set_transform(entity_id, x, y, rotation, scale_x, scale_y)`
 
