@@ -1,5 +1,5 @@
 use crate::lua::runtime::state_manager::StateManager;
-use mlua::{Lua, Table, Result as LuaResult};
+use mlua::{Lua, Result as LuaResult, Table};
 use std::rc::Rc;
 
 pub fn register_renderable_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
