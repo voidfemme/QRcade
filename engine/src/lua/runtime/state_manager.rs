@@ -1,6 +1,7 @@
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::component::GameState;
 use crate::ecs::components::sprite::SpriteShapeData;
+use crate::ecs::components::velocity::Velocity;
 use crate::ecs::systems::collision_system::CollisionSystem;
 use crate::ecs::systems::input_system::InputSystem;
 use crate::{Renderer, Sdl2Renderer};
@@ -21,6 +22,29 @@ impl StateManager {
             state,
             input: RefCell::new(InputSystem::new()),
             assets: AssetManager::new(),
+        }
+    }
+
+    pub fn set_velocity(&self, entity_id: u32, vx: f32, vy: f32) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                state.add_velocity(entity_id, Velocity::new(vx, vy));
+                Ok(())
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn get_velocity(&self, entity_id: u32) -> Result<(f32, f32), &'static str> {
+        match self.state.try_borrow() {
+            Ok(state) => {
+                if let Some(velocity) = state.velocities.get(&entity_id) {
+                    Ok((velocity.dx, velocity.dy))
+                } else {
+                    Ok((0.0, 0.0))
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
         }
     }
 

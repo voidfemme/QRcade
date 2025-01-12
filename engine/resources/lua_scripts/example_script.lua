@@ -1,101 +1,94 @@
-local player, goal
+-- Define global variables
+local player
 local player_x, player_y
-local goal_x, goal_y
-local speed = 200  -- Movement speed in pixels per second
+local player_velocity_x, player_velocity_y
+local speed = 200          -- Horizontal movement speed (pixels per second)
+local jump_strength = 400  -- Initial jump velocity
+local gravity = 900        -- Gravity acceleration (pixels per second squared)
+local is_on_ground = false
+
+local platform            -- Single platform entity
 local screen_width = 800
 local screen_height = 600
 
-local followers = {}        -- List to hold follower segments
-local follow_distance = 16  -- Distance each follower should maintain
-
-function spawn_goal()
-    -- Create a new red square at a random position
-    goal = create_entity()
-    goal_x = math.random(50, screen_width - 50)   -- Keeping a margin
-    goal_y = math.random(50, screen_height - 50)  -- Keeping a margin
-    set_transform(goal, goal_x, goal_y, 0, 1.0, 1.0)
-    add_shape(goal, "square", 255, 0, 0)  -- Red square
+-- Function to create a platform
+function create_platform(x, y, width, height)
+    local plat = create_entity()
+    set_transform(plat, x, y, 0, 1.0, 1.0)
+    add_shape(plat, "square", 100, 100, 100)  -- Grey platform
+    -- Resize the platform to the specified width and height
+    set_transform(plat, x, y, 0, width / 100, height / 100)
+    return plat
 end
 
 function on_start()
-    -- Create player as a green circle
+    -- Initialize player as a green triangle
     player = create_entity()
     player_x = 100
-    player_y = 100
+    player_y = 500
+    player_velocity_x = 0
+    player_velocity_y = 0
     set_transform(player, player_x, player_y, 0, 1.0, 1.0)
-    add_shape(player, "circle", 0, 255, 0)  -- Green circle
+    add_shape(player, "triangle", 0, 255, 0)  -- Green triangle
 
-    spawn_goal()  -- Create the initial goal
+    -- Create one big ground platform
+    platform = create_platform(400, 580, 800, 40)
 end
 
 function on_frame(delta_time)
-    local moveX, moveY = 0, 0
-
-    -- Check for arrow key input to determine movement direction
+    -- Handle horizontal input
     if is_key_pressed("LEFT") then
-        moveX = moveX - 1
-    end
-    if is_key_pressed("RIGHT") then
-        moveX = moveX + 1
-    end
-    if is_key_pressed("UP") then
-        moveY = moveY - 1
-    end
-    if is_key_pressed("DOWN") then
-        moveY = moveY + 1
+        player_velocity_x = -speed
+    elseif is_key_pressed("RIGHT") then
+        player_velocity_x = speed
+    else
+        player_velocity_x = 0
     end
 
-    -- Normalize the movement vector to maintain consistent speed diagonally
-    local magnitude = math.sqrt(moveX * moveX + moveY * moveY)
-    if magnitude > 0 then
-        moveX = moveX / magnitude
-        moveY = moveY / magnitude
+    -- Handle jumping
+    if is_key_pressed("SPACE") and is_on_ground then
+        player_velocity_y = -jump_strength
+        is_on_ground = false
     end
 
-    -- Update player position based on input and speed
-    player_x = player_x + moveX * speed * delta_time
-    player_y = player_y + moveY * speed * delta_time
+    -- Apply gravity
+    player_velocity_y = player_velocity_y + gravity * delta_time
+
+    -- Update player position
+    player_x = player_x + player_velocity_x * delta_time
+    player_y = player_y + player_velocity_y * delta_time
     set_transform(player, player_x, player_y, 0, 1.0, 1.0)
 
-    -- Check for collision between the player and the goal
-    if goal and is_colliding(player, goal) then
-        destroy_entity(goal)  -- Remove the old goal
-        print("Goal reached, preparing new elements")
-
-        -- Create a new follower before spawning a new goal
-        local new_follower_entity = create_entity()
-        set_transform(new_follower_entity, player_x, player_y, 0, 1.0, 1.0)
-        add_shape(new_follower_entity, "circle", 0, 200, 0)  -- Dark green circle
-        table.insert(followers, {entity = new_follower_entity, x = player_x, y = player_y})
-
-        spawn_goal()  -- Spawn a new goal at a random position
-        print("New goal spawned")
+    -- Collision detection with the single platform
+    is_on_ground = false
+    if is_colliding(player, platform) then
+        -- Simple collision resolution: place player on top of the platform
+        local platform_x, platform_y = get_transform(platform)
+        player_y = platform_y - 20  -- Adjust based on player's height
+        player_velocity_y = 0
+        is_on_ground = true
+        set_transform(player, player_x, player_y, 0, 1.0, 1.0)
     end
 
-    -- Update followers to follow the previous circle 16 pixels away
-    for i, follower in ipairs(followers) do
-        local leader_x, leader_y
-        if i == 1 then
-            leader_x, leader_y = player_x, player_y
-        else
-            leader_x, leader_y = followers[i-1].x, followers[i-1].y
-        end
+    -- Prevent player from moving out of screen bounds horizontally
+    if player_x < 0 then
+        player_x = 0
+        set_transform(player, player_x, player_y, 0, 1.0, 1.0)
+    elseif player_x > screen_width then
+        player_x = screen_width
+        set_transform(player, player_x, player_y, 0, 1.0, 1.0)
+    end
 
-        local dx = leader_x - follower.x
-        local dy = leader_y - follower.y
-        local distance = math.sqrt(dx*dx + dy*dy)
-
-        if distance > follow_distance then
-            local dir_x = dx / distance
-            local dir_y = dy / distance
-            follower.x = leader_x - dir_x * follow_distance
-            follower.y = leader_y - dir_y * follow_distance
-            set_transform(follower.entity, follower.x, follower.y, 0, 1.0, 1.0)
-        end
+    -- Reset player if they fall below the screen
+    if player_y > screen_height then
+        player_x = 100
+        player_y = 500
+        player_velocity_y = 0
+        set_transform(player, player_x, player_y, 0, 1.0, 1.0)
     end
 end
 
 function on_end()
-    print("Game ended")
+    print("Platformer game ended")
 end
 

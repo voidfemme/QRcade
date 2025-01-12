@@ -14,7 +14,9 @@ use mlua::{Lua, Result as LuaResult};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
+use std::env;
 use std::fs;
+use std::path::Path;
 use std::rc::Rc;
 
 struct EngineConfig {
@@ -22,6 +24,7 @@ struct EngineConfig {
     window_width: u32,
     window_height: u32,
     window_title: &'static str,
+    script_path: String,
 }
 
 impl Default for EngineConfig {
@@ -31,11 +34,19 @@ impl Default for EngineConfig {
             window_width: 800,
             window_height: 600,
             window_title: "My Engine",
+            script_path: "resources/lua_scripts/example_script.lua".to_string(),
         }
     }
 }
 
 fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
+    // Verify the script file exists
+    if !Path::new(filepath).exists() {
+        return Err(mlua::Error::external(format!(
+            "Script file not found: {}",
+            filepath
+        )));
+    }
     let script_content = fs::read(filepath)
         .map_err(|e| mlua::Error::external(format!("Failed to read file: {}", e)))?;
 
@@ -43,9 +54,13 @@ fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
     Ok(())
 }
 
-fn setup(_state_manager: Rc<StateManager>, lua: &Lua) -> Result<(), mlua::Error> {
+fn setup(
+    _state_manager: Rc<StateManager>,
+    lua: &Lua,
+    script_path: &str,
+) -> Result<(), mlua::Error> {
     // Load and run the initialization Lua script
-    load_lua_script(lua, "resources/lua_scripts/example_script.lua")?;
+    load_lua_script(lua, script_path)?;
 
     // Call the Lua on_start function if it exists
     call_on_start(lua)?;
@@ -68,11 +83,21 @@ fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer, debug: b
 }
 
 fn main() -> LuaResult<()> {
+    // Parse command line arguments
+    let args: Vec<String> = env::args().collect();
+
     // Create engine configuration
-    let config = EngineConfig {
+    let mut config = EngineConfig {
         debug_mode: std::env::var("DEBUG").is_ok(),
         ..Default::default()
     };
+
+    // If a script path is provided as an argument, use it
+    if args.len() > 1 {
+        config.script_path = args[1].clone();
+    }
+
+    println!("Loading script: {}", config.script_path);
 
     // Initialize Gamestate with debug mode
     let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
@@ -98,9 +123,16 @@ fn main() -> LuaResult<()> {
     register_collision_api(&lua, Rc::clone(&state_manager))?;
 
     // Run setup
-    setup(Rc::clone(&state_manager), &lua)?;
-    if config.debug_mode {
-        state_manager.debug_print_entities().unwrap();
+    match setup(Rc::clone(&state_manager), &lua, &config.script_path) {
+        Ok(_) => {
+            if config.debug_mode {
+                state_manager.debug_print_entities().unwrap();
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to load script '{}': {}", config.script_path, e);
+            return Err(e);
+        }
     }
 
     // Set up time

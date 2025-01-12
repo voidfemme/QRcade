@@ -63,6 +63,10 @@ impl GameState {
         self.colliders.push(collider);
     }
 
+    pub fn get_velocity(&self, entity_id: u32) -> Option<&Velocity> {
+        self.velocities.get(&entity_id)
+    }
+
     /// Destroy an entity
     pub fn destroy_entity(&mut self, entity: Entity) {
         // Remove from entities vector
