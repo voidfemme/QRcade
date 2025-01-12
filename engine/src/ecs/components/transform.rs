@@ -14,4 +14,14 @@ impl Transform {
         self.x += dx;
         self.y += dy;
     }
+
+    pub fn rotate(&mut self, angle: f32) {
+        // Normalize the angle to keep it between 0 and 2PI
+        while self.rotation > std::f32::consts::TAU {
+            self.rotation -= std::f32::consts::TAU;
+        }
+        while self.rotation < 0.0 {
+            self.rotation += std::f32::consts::TAU;
+        }
+    }
 }
