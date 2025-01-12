@@ -14,7 +14,7 @@ Creates a new entity in the game world.
 - `entity_id` (unique identifier for the entity)
 
 **Example**:
-```
+```lua
 local player = create_entity()
 ```
 
@@ -26,6 +26,6 @@ Removes the specified entity from the game world
 - `entity_id` (number): The ID of the entity to remove
 
 **Example**:
-```
+```lua
 destroy_entity(player)
 ```

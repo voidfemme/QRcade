@@ -15,7 +15,7 @@ Determines if two entities are colliding.
 - `true` if the entities are colliding, `false` otherwise.
 
 **Example**:
-```
+```lua
 if is_colliding(player, enemy) then
   reduce_health(player, 10)
 end

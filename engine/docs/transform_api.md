@@ -17,7 +17,7 @@ Sets the transform properties for an entity
 - `scale_x`, `scale_y` (number): Scale factors for width and height
 
 **Example**
-```
+```lua
 set_transform(player, 100, 200, 0, 1.0, 1.0)
 ```
 
@@ -29,7 +29,7 @@ Retrieves the transform properties of an entity.
 - `(x, y, rotation, scale_x, scale_y)`
 
 **Example**:
-```
+```lua
 local x, y, rotation, scale_x, scale_y = get_transform(player)
 ```
 

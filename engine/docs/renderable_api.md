@@ -18,6 +18,6 @@ Adds a shape to an entity for rendering.
 - `params` (optional table): Additional parameters for the shape (e.g., size).
 
 **Example**
-```
+```lua
 add_shape(player, "triangle", 0, 255, 0, {x1 = 0, y1 = -16, x2 = -16, y2 = 16, x3 = 16, y3 = 16})
 ```
