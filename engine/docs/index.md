@@ -70,4 +70,5 @@ If you're stuck or looking for deeper insights, refer to the respective API docu
 
 ---
 
-Happy coding and enjoy building w
+Happy coding and enjoy building with QRcade!
+
