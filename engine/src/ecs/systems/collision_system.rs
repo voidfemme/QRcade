@@ -287,4 +287,236 @@ impl CollisionSystem {
             transform1, asset1, transform2, asset2,
         ))
     }
+
+    pub fn check_entity_tilemap_collision(
+        state: &GameState,
+        asset_manager: &AssetManager,
+        entity_id: u32,
+        tilemap_entity: u32,
+        x: f32,
+        y: f32,
+    ) -> Result<bool, &'static str> {
+        // Get entity sprite and transform
+        let sprite = state
+            .sprites
+            .get(&entity_id)
+            .ok_or("Entity has no sprite")?;
+
+        let asset = asset_manager
+            .get_by_name(&sprite.asset_name)
+            .ok_or("Could not find asset for Entity")?;
+
+        // Get tilemap
+        let tilemap = state
+            .tilemaps
+            .get(&tilemap_entity)
+            .ok_or("No tilemap found for entity")?;
+
+        // Get entity dimensions and check collision based on shape type
+        match &asset.shape {
+            PrimitiveShape::Rectangle { width, height } => {
+                // Check collision at the corners of the rectangle
+                let half_width = width / 2.0;
+                let half_height = height / 2.0;
+                let corners = [
+                    (x - half_width, y - half_height), // Top-left
+                    (x + half_width, y - half_height), // Top-right
+                    (x - half_width, y + half_height), // Bottom-left
+                    (x + half_width, y + half_height), // Bottom-right
+                ];
+
+                for (corner_x, corner_y) in corners.iter() {
+                    let tile_x = (corner_x / tilemap.tile_size as f32).floor() as u32;
+                    let tile_y = (corner_y / tilemap.tile_size as f32).floor() as u32;
+
+                    if tile_x < tilemap.width && tile_y < tilemap.height {
+                        if let Some(tile) = tilemap.get_tile(tile_x, tile_y) {
+                            if !tile.walkable {
+                                return Ok(true);
+                            }
+                        }
+                    } else {
+                        return Ok(true);
+                    }
+                }
+            }
+            PrimitiveShape::Circle { radius } => {
+                let half_size = radius;
+                let corners = [
+                    (x - half_size, y - half_size),
+                    (x + half_size, y - half_size),
+                    (x - half_size, y + half_size),
+                    (x + half_size, y + half_size),
+                ];
+
+                for (corner_x, corner_y) in corners.iter() {
+                    let tile_x = (corner_x / tilemap.tile_size as f32).floor() as u32;
+                    let tile_y = (corner_y / tilemap.tile_size as f32).floor() as u32;
+
+                    if tile_x < tilemap.width && tile_y < tilemap.height {
+                        if let Some(tile) = tilemap.get_tile(tile_x, tile_y) {
+                            if !tile.walkable {
+                                return Ok(true);
+                            }
+                        }
+                    } else {
+                        return Ok(true);
+                    }
+                }
+            }
+            PrimitiveShape::Triangle {
+                x1,
+                y1,
+                x2,
+                y2,
+                x3,
+                y3,
+            } => {
+                // Get the world-space coordinates of the triangle vertices
+                let world_x1 = x + x1;
+                let world_y1 = y + y1;
+                let world_x2 = x + x2;
+                let world_y2 = y + y2;
+                let world_x3 = x + x3;
+                let world_y3 = y + y3;
+
+                // Get the bounding box of the triangle
+                let min_x = world_x1.min(world_x2.min(world_x3));
+                let max_x = world_x1.max(world_x2.max(world_x3));
+                let min_y = world_y1.min(world_y2.min(world_y3));
+                let max_y = world_y1.max(world_y2.max(world_y3));
+
+                // Convert to tile coordinates
+                let start_tile_x = (min_x / tilemap.tile_size as f32).floor() as u32;
+                let end_tile_x = (max_x / tilemap.tile_size as f32).ceil() as u32;
+                let start_tile_y = (min_y / tilemap.tile_size as f32).floor() as u32;
+                let end_tile_y = (max_y / tilemap.tile_size as f32).ceil() as u32;
+
+                // Check each tile that could intersect with the triangle
+                for tile_y in start_tile_y..=end_tile_y {
+                    for tile_x in start_tile_x..=end_tile_x {
+                        if tile_x < tilemap.width && tile_y < tilemap.height {
+                            if let Some(tile) = tilemap.get_tile(tile_x, tile_y) {
+                                if !tile.walkable {
+                                    // Check if any corner of the tile is inside the triangle
+                                    let tile_world_x = tile_x as f32 * tilemap.tile_size as f32;
+                                    let tile_world_y = tile_y as f32 * tilemap.tile_size as f32;
+                                    let tile_corners = [
+                                        (tile_world_x, tile_world_y),
+                                        (tile_world_x + tilemap.tile_size as f32, tile_world_y),
+                                        (tile_world_x, tile_world_y + tilemap.tile_size as f32),
+                                        (
+                                            tile_world_x + tilemap.tile_size as f32,
+                                            tile_world_y + tilemap.tile_size as f32,
+                                        ),
+                                    ];
+
+                                    for (corner_x, corner_y) in tile_corners.iter() {
+                                        if Self::is_point_in_triangle(
+                                            *corner_x, *corner_y, world_x1, world_y1, world_x2,
+                                            world_y2, world_x3, world_y3,
+                                        ) {
+                                            return Ok(true);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            PrimitiveShape::Line { x2, y2 } => {
+                // Get the world-space coordinates of the line endpoints
+                let start_x = x;
+                let start_y = y;
+                let end_x = x + x2;
+                let end_y = y + y2;
+
+                // Get the bounding box of the line
+                let min_x = start_x.min(end_x);
+                let max_x = start_x.max(end_x);
+                let min_y = start_y.min(end_y);
+                let max_y = start_y.max(end_y);
+
+                // Convert to tile coordinates
+                let start_tile_x = (min_x / tilemap.tile_size as f32).floor() as u32;
+                let end_tile_x = (max_x / tilemap.tile_size as f32).ceil() as u32;
+                let start_tile_y = (min_y / tilemap.tile_size as f32).floor() as u32;
+                let end_tile_y = (max_y / tilemap.tile_size as f32).ceil() as u32;
+
+                // Check each tile that could intersect with the line
+                for tile_y in start_tile_y..=end_tile_y {
+                    for tile_x in start_tile_x..=end_tile_x {
+                        if tile_x < tilemap.width && tile_y < tilemap.height {
+                            if let Some(tile) = tilemap.get_tile(tile_x, tile_y) {
+                                if !tile.walkable {
+                                    // Get tile edges
+                                    let tile_world_x = tile_x as f32 * tilemap.tile_size as f32;
+                                    let tile_world_y = tile_y as f32 * tilemap.tile_size as f32;
+                                    let tile_size = tilemap.tile_size as f32;
+
+                                    // Check intersection with all four edges of the tile
+                                    if Self::check_line_intersection(
+                                        start_x,
+                                        start_y,
+                                        end_x,
+                                        end_y,
+                                        tile_world_x,
+                                        tile_world_y,
+                                        tile_world_x + tile_size,
+                                        tile_world_y,
+                                    ) || Self::check_line_intersection(
+                                        start_x,
+                                        start_y,
+                                        end_x,
+                                        end_y,
+                                        tile_world_x + tile_size,
+                                        tile_world_y,
+                                        tile_world_x + tile_size,
+                                        tile_world_y + tile_size,
+                                    ) || Self::check_line_intersection(
+                                        start_x,
+                                        start_y,
+                                        end_x,
+                                        end_y,
+                                        tile_world_x + tile_size,
+                                        tile_world_y + tile_size,
+                                        tile_world_x,
+                                        tile_world_y + tile_size,
+                                    ) || Self::check_line_intersection(
+                                        start_x,
+                                        start_y,
+                                        end_x,
+                                        end_y,
+                                        tile_world_x,
+                                        tile_world_y + tile_size,
+                                        tile_world_x,
+                                        tile_world_y,
+                                    ) {
+                                        return Ok(true);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check the center point
+        let tile_x = (x / tilemap.tile_size as f32).floor() as u32;
+        let tile_y = (y / tilemap.tile_size as f32).floor() as u32;
+
+        if tile_x < tilemap.width && tile_y < tilemap.height {
+            if let Some(tile) = tilemap.get_tile(tile_x, tile_y) {
+                if !tile.walkable {
+                    return Ok(true);
+                }
+            }
+        } else {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
 }

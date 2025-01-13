@@ -26,6 +26,37 @@ impl StateManager {
         }
     }
 
+    pub fn check_position_walkable(
+        &self,
+        entity_id: u32,
+        tilemap_id: u32,
+        x: f32,
+        y: f32,
+    ) -> Result<bool, &'static str> {
+        match self.state.try_borrow() {
+            Ok(state) => {
+                // First check if the position is in a walkable tile
+                if let Some(tilemap) = state.tilemaps.get(&tilemap_id) {
+                    // Check for collisions using the collision system
+                    match CollisionSystem::check_entity_tilemap_collision(
+                        &state,
+                        &self.assets,
+                        entity_id,
+                        tilemap_id,
+                        x,
+                        y,
+                    ) {
+                        Ok(collision) => Ok(!collision), // If there's no collision, it's walkable
+                        Err(e) => Err(e),
+                    }
+                } else {
+                    Err("Tilemap not found")
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
     pub fn create_tilemap(
         &self,
         entity_id: u32,

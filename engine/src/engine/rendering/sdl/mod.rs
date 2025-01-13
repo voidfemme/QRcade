@@ -42,7 +42,9 @@ impl Renderer for Sdl2Renderer {
 
     fn draw_rect(&mut self, x: i32, y: i32, width: u32, height: u32, color: Color) {
         self.canvas.set_draw_color(color);
-        let rect = Rect::new(x, y, width, height);
+        let half_w = width as i32 / 2;
+        let half_h = height as i32 / 2;
+        let rect = Rect::new(x - half_w, y - half_h, width, height);
         let _ = self.canvas.fill_rect(rect);
     }
 

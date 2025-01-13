@@ -94,20 +94,25 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
                         result.set("tile_size", view.tile_size)?;
                         Ok(result)
                     }
-                    TilemapQueryResult::Tile(tile) => match tile {
-                        Some(t) => {
-                            let result = lua.create_table()?;
-                            result.set("tile_id", t.tile_id)?;
-                            result.set("walkable", t.walkable)?;
-                            let color_table = lua.create_table()?;
-                            color_table.set(1, t.color.0)?;
-                            color_table.set(2, t.color.1)?;
-                            color_table.set(3, t.color.2)?;
-                            result.set("color", color_table)?;
-                            Ok(result)
+                    TilemapQueryResult::Tile(tile) => {
+                        match tile {
+                            Some(t) => {
+                                let result = lua.create_table()?;
+                                result.set("tile_id", t.tile_id)?;
+                                result.set("walkable", t.walkable)?;
+                                let color_table = lua.create_table()?;
+                                color_table.set(1, t.color.0)?;
+                                color_table.set(2, t.color.1)?;
+                                color_table.set(3, t.color.2)?;
+                                result.set("color", color_table)?;
+                                Ok(result)
+                            }
+                            None => {
+                                // Create an empty table instead of returning nil
+                                Ok(lua.create_table()?)
+                            }
                         }
-                        None => Ok(lua.create_table()?),
-                    },
+                    }
                     TilemapQueryResult::Area(tiles) => {
                         let result = lua.create_table()?;
                         for (i, (x, y, tile)) in tiles.into_iter().enumerate() {
@@ -156,13 +161,28 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         })?
     };
 
+    // Position walkable check
+    let check_position_walkable = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(
+            move |_, (entity_id, tilemap_id, x, y): (u32, u32, f32, f32)| {
+                manager
+                    .check_position_walkable(entity_id, tilemap_id, x, y)
+                    .map_err(mlua::Error::runtime)
+            },
+        )?
+    };
+
     // Register functions
     lua.globals().set("create_tilemap", create_tilemap)?;
     lua.globals().set("set_tile", set_tile)?;
     lua.globals().set("clear_tile", clear_tile)?;
     lua.globals().set("is_walkable", is_walkable)?;
-    lua.globals().set("query_tilemap", query_tilemap)?; // Add this line!
+    lua.globals().set("query_tilemap", query_tilemap)?;
+    lua.globals()
+        .set("check_position_walkable", check_position_walkable)?; // Add this line!
 
     Ok(())
 }
+
 

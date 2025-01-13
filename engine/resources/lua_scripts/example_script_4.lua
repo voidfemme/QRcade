@@ -1,87 +1,101 @@
--- Constants
+-- Configuration
 local TILE_SIZE = 32
+local PLAYER_COLOR = {0, 255, 0}    -- Green
+local WALL_COLOR = {50, 50, 50}     -- Dark gray
+local FLOOR_COLOR = {200, 200, 200}  -- Light gray
 
--- Predefined maze layout: 0 = walkable, 1 = wall
+-- Create the map entity
+local map = create_entity()
+create_tilemap(map, 10, 10, TILE_SIZE)
+
+-- Simple maze layout (1 = wall, 0 = floor)
 local maze = {
-  {1,1,1,1,1,1,1,1,1,1},
-  {1,0,0,1,0,0,0,1,0,1},
-  {1,0,1,1,0,1,0,1,0,1},
-  {1,0,0,0,0,1,0,0,0,1},
-  {1,1,1,1,0,1,1,1,0,1},
-  {1,0,0,0,0,0,0,1,0,1},
-  {1,0,1,1,1,1,0,1,0,1},
-  {1,0,0,0,0,1,0,0,0,1},
-  {1,1,1,1,1,1,1,1,0,1},
-  {1,1,1,1,1,1,1,1,1,1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
+    {1, 0, 1, 1, 0, 0, 0, 1, 0, 1},
+    {1, 0, 0, 0, 0, 1, 1, 1, 0, 1},
+    {1, 0, 1, 1, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 1, 1, 1, 1, 1, 0, 1},
+    {1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 1, 1, 1, 1, 1, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 }
 
--- Create entities
-local player = create_entity()
-local map_entity = create_entity()
-
--- Create a 10x10 tilemap for our maze
-create_tilemap(map_entity, 10, 10, TILE_SIZE)
-local tilemap = map_entity
-
--- Build the maze using the predefined layout
-for y = 0, 9 do
-  for x = 0, 9 do
-    if maze[y+1][x+1] == 1 then
-      set_tile(tilemap, x, y, 1, false, 255, 0, 0)  -- wall
-    else
-      set_tile(tilemap, x, y, 2, true, 0, 255, 0)   -- walkable
+-- Place the tiles
+for y = 1, #maze do
+    for x = 1, #maze[y] do
+        local tile_type = maze[y][x]
+        if tile_type == 1 then
+            -- Wall tile
+            set_tile(map, x-1, y-1, 1, false, WALL_COLOR[1], WALL_COLOR[2], WALL_COLOR[3])
+        else
+            -- Floor tile
+            set_tile(map, x-1, y-1, 0, true, FLOOR_COLOR[1], FLOOR_COLOR[2], FLOOR_COLOR[3])
+        end
     end
-  end
 end
 
--- Set player's starting tile position at (1,1)
-local player_tile_x = 1
-local player_tile_y = 1
+-- Create player entity
+local player = create_entity()
+local player_pos = {
+    grid_x = 1,  -- Starting position (in grid coordinates)
+    grid_y = 1
+}
 
-set_transform(player, player_tile_x * TILE_SIZE, player_tile_y * TILE_SIZE, 0, 1, 1)
-add_shape(player, "square", 0, 0, 255, {size = TILE_SIZE - 4})
-
-function move_player(dx, dy)
-  local new_tile_x = player_tile_x + dx
-  local new_tile_y = player_tile_y + dy
-  
-  -- Check bounds
-  if new_tile_x < 0 or new_tile_x > 9 or new_tile_y < 0 or new_tile_y > 9 then
-    return
-  end
-  
-  if is_walkable(tilemap, new_tile_x, new_tile_y) then
-    player_tile_x = new_tile_x
-    player_tile_y = new_tile_y
-    set_transform(player, player_tile_x * TILE_SIZE, player_tile_y * TILE_SIZE, 0, 1, 1)
-    print("Moved to tile:", player_tile_x, player_tile_y)
-  else
-    print("Hit a wall at:", new_tile_x, new_tile_y)
-  end
+-- Update player position function
+local function update_player_position()
+    set_transform(player, 
+        player_pos.grid_x * TILE_SIZE,  -- Engine will handle centering
+        player_pos.grid_y * TILE_SIZE, 
+        0, 1.0, 1.0)
 end
 
-function update()
-  local moved = false
+-- Create player sprite
+add_shape(player, "square", PLAYER_COLOR[1], PLAYER_COLOR[2], PLAYER_COLOR[3], {width = 20, height = 20})
+update_player_position()
 
-  if is_key_pressed("W") then
-    move_player(0, -1)
-    moved = true
-  end
-  if is_key_pressed("S") then
-    move_player(0, 1)
-    moved = true
-  end
-  if is_key_pressed("A") then
-    move_player(-1, 0)
-    moved = true
-  end
-  if is_key_pressed("D") then
-    move_player(1, 0)
-    moved = true
-  end
-
-  if moved then
-    print("Player position:", player_tile_x, player_tile_y)
-  end
+-- Helper function to check if a grid position is walkable
+local function can_move_to(x, y)
+    return is_walkable(map, x, y)
 end
 
+-- Movement cooldown to prevent too rapid movement
+local move_cooldown = 0
+local MOVE_DELAY = 0.15  -- seconds between moves
+
+function on_frame(delta_time)
+    -- Update cooldown
+    if move_cooldown > 0 then
+        move_cooldown = move_cooldown - delta_time
+        return
+    end
+
+    -- Handle movement
+    local dx, dy = 0, 0
+    
+    if is_key_pressed("UP") or is_key_pressed("W") then
+        dy = -1
+    elseif is_key_pressed("DOWN") or is_key_pressed("S") then
+        dy = 1
+    elseif is_key_pressed("LEFT") or is_key_pressed("A") then
+        dx = -1
+    elseif is_key_pressed("RIGHT") or is_key_pressed("D") then
+        dx = 1
+    end
+    
+    -- Try to move if a direction was pressed
+    if dx ~= 0 or dy ~= 0 then
+        local new_x = player_pos.grid_x + dx
+        local new_y = player_pos.grid_y + dy
+        
+        if can_move_to(new_x, new_y) then
+            player_pos.grid_x = new_x
+            player_pos.grid_y = new_y
+            update_player_position()
+            move_cooldown = MOVE_DELAY  -- Set cooldown
+        end
+    end
+end
+
+print("Use WASD or arrow keys to move the green square")
