@@ -1,15 +1,12 @@
 # QRcade Game Engine Documentation
-
 Welcome to the QRcade Game Engine documentation! Whether you're just starting or a seasoned developer, this guide will help you leverage the engine's powerful features to build your game. Below is a categorized overview of the engine's capabilities, along with links to detailed API documentation and guides.
 
 ## Getting Started
-
 To begin coding, follow these steps:
-
 1. **Setup Your Game:** Define the main entry points for your game logic using [Script Callback Functions](script_callbacks.md).
 2. **Create Game Entities:** Use the [Entity API](entity_api.md) to create the building blocks of your game world.
 3. **Design Your Game World:** Utilize the [Tilemap API](tilemap_api.md) for grid-based levels, and the [Transform API](transform_api.md) to position and scale your entities.
-4. **Add Movement:** Control entity motion with the [Velocity API](velocity_api.md).
+4. **Add Movement:** Control entity motion with the [Velocity API](velocity_api.md) and add physics with the [Gravity API](gravity_api.md).
 5. **Handle Input:** Use the [Input API](input_api.md) to make your game interactive.
 6. **Render Visuals:** Bring your entities to life with the [Renderable API](renderable_api.md).
 7. **Implement Interactions:** Detect and manage interactions between entities using the [Collision API](collision_api.md).
@@ -20,6 +17,7 @@ To begin coding, follow these steps:
 - **[Entity API](entity_api.md):** Manage entities, the fundamental objects in your game world.
 - **[Transform API](transform_api.md):** Adjust position, rotation, and scale for entities.
 - **[Velocity API](velocity_api.md):** Implement movement and control dynamics.
+- **[Gravity API](gravity_api.md):** Add realistic physics with different types of gravity.
 
 ### Gameplay and Logic
 - **[Tilemap API](tilemap_api.md):** Create grid-based worlds and manage terrain.
@@ -39,6 +37,7 @@ function on_start()
   local player = create_entity()
   set_transform(player, 50, 50, 0, 1, 1)
   add_shape(player, "circle", 255, 0, 0, {radius = 20})
+  add_downward_gravity(player, 1, 10)  -- Add normal gravity
 end
 ```
 
@@ -56,6 +55,20 @@ function on_frame(delta_time)
 end
 ```
 
+### Creating Physics Effects
+Create different types of gravity for varied gameplay:
+```lua
+-- Create a planet with attractive gravity
+local planet = create_entity()
+add_shape(planet, "circle", 255, 255, 0, {radius = 32})
+add_attractive_gravity(planet, 5000, 200)
+
+-- Create an explosion with repulsive force
+local explosion = create_entity()
+add_shape(explosion, "circle", 255, 0, 0, {radius = 16})
+add_repulsive_gravity(explosion, 1000, 300)
+```
+
 ### Managing Collisions
 Detect and handle collisions between entities:
 ```lua
@@ -65,10 +78,7 @@ end
 ```
 
 ## Need Help?
-
 If you're stuck or looking for deeper insights, refer to the respective API documentation or explore the provided examples in each file.
 
 ---
-
 Happy coding and enjoy building with QRcade!
-
