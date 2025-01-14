@@ -1,4 +1,6 @@
-use super::{sprite::Sprite, tilemap::Tilemap, transform::Transform, velocity::Velocity};
+use super::{
+    gravity::Gravity, sprite::Sprite, tilemap::Tilemap, transform::Transform, velocity::Velocity,
+};
 use std::collections::HashMap;
 
 pub type Entity = u32;
@@ -17,6 +19,7 @@ pub struct GameState {
     pub velocities: HashMap<Entity, Velocity>,
     pub sprites: HashMap<Entity, Sprite>,
     pub tilemaps: HashMap<u32, Tilemap>,
+    pub gravities: HashMap<Entity, Gravity>,
     next_entity_id: u32,
 }
 
@@ -32,6 +35,7 @@ impl GameState {
             velocities: HashMap::new(),
             sprites: HashMap::new(),
             tilemaps: HashMap::new(),
+            gravities: HashMap::new(),
             next_entity_id: 0,
         }
     }

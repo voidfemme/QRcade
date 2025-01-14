@@ -6,3 +6,4 @@ pub mod renderable_api;
 pub mod transform_api;
 pub mod velocity_api;
 pub mod tilemap_api;
+pub mod gravity_api;

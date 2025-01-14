@@ -46,7 +46,7 @@ impl AssetManager {
                     width: 32.0,
                     height: 32.0,
                 },
-                name: "square",
+                name: "rectangle",
                 id: 1,
             },
             BuiltInAsset {

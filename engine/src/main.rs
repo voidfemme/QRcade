@@ -7,8 +7,8 @@ use ecs::{movement_system, render_system, GameState};
 use engine::rendering::{Renderer, Sdl2Renderer};
 use lua::{
     call_on_end, call_on_frame, call_on_start, register_collision_api, register_entity_api,
-    register_input_api, register_renderable_api, register_tilemap_api, register_transform_api,
-    StateManager,
+    register_gravity_api, register_input_api, register_renderable_api, register_tilemap_api,
+    register_transform_api, register_velocity_api, StateManager,
 };
 
 use mlua::{Lua, Result as LuaResult};
@@ -73,7 +73,7 @@ fn update(state_manager: Rc<StateManager>, lua: &Lua, delta_time: f32) -> Result
     call_on_frame(lua, delta_time)?;
 
     // Update physics/movement
-    movement_system(state_manager);
+    movement_system(state_manager, delta_time);
     Ok(())
 }
 
@@ -123,6 +123,8 @@ fn main() -> LuaResult<()> {
     register_input_api(&lua, Rc::clone(&state_manager))?;
     register_collision_api(&lua, Rc::clone(&state_manager))?;
     register_tilemap_api(&lua, Rc::clone(&state_manager))?;
+    register_velocity_api(&lua, Rc::clone(&state_manager))?;
+    register_gravity_api(&lua, Rc::clone(&state_manager))?;
 
     // Run setup
     match setup(Rc::clone(&state_manager), &lua, &config.script_path) {

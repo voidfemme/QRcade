@@ -16,6 +16,23 @@ impl Velocity {
         }
     }
 
+    pub fn zero() -> Self {
+        Self {
+            dx: 0.0,
+            dy: 0.0,
+            angular: 0.0,
+        }
+    }
+
+    // Helper function for typical horizontal movement speeds
+    pub fn horizontal(speed: f32) -> Self {
+        Self {
+            dx: speed,
+            dy: 0.0,
+            angular: 0.0,
+        }
+    }
+
     pub fn with_rotation(dx: f32, dy: f32, angular: f32) -> Self {
         Self { dx, dy, angular }
     }

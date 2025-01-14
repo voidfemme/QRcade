@@ -1,5 +1,6 @@
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::component::GameState;
+use crate::ecs::components::gravity::Gravity;
 use crate::ecs::components::sprite::SpriteShapeData;
 use crate::ecs::components::tilemap::{Tile, Tilemap, TilemapQuery, TilemapQueryResult};
 use crate::ecs::components::velocity::Velocity;
@@ -23,6 +24,142 @@ impl StateManager {
             state,
             input: RefCell::new(InputSystem::new()),
             assets: AssetManager::new(),
+        }
+    }
+
+    pub fn add_downward_gravity(
+        &self,
+        entity_id: u32,
+        force: f32,
+        terminal_velocity: f32,
+    ) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if !state.entities.contains(&entity_id) {
+                    return Err("Entity does not exist");
+                }
+
+                let gravity = Gravity::downward(force, terminal_velocity);
+                state.gravities.insert(entity_id, gravity);
+                Ok(())
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn add_attractive_gravity(
+        &self,
+        entity_id: u32,
+        force: f32,
+        terminal_velocity: f32,
+    ) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if !state.entities.contains(&entity_id) {
+                    return Err("Entity does not exist");
+                }
+
+                let gravity = Gravity::attractive(force, terminal_velocity);
+                state.gravities.insert(entity_id, gravity);
+                Ok(())
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn add_repulsive_gravity(
+        &self,
+        entity_id: u32,
+        force: f32,
+        terminal_velocity: f32,
+    ) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if !state.entities.contains(&entity_id) {
+                    return Err("Entity does not exist");
+                }
+
+                let gravity = Gravity::repulsive(force, terminal_velocity);
+                state.gravities.insert(entity_id, gravity);
+                Ok(())
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn set_gravity_enabled(&self, entity_id: u32, enabled: bool) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if let Some(gravity) = state.gravities.get_mut(&entity_id) {
+                    gravity.enabled = enabled;
+                    Ok(())
+                } else {
+                    Err("Entity does not have gravity component")
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn set_zero_velocity(&self, entity_id: u32) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if let Some(velocity) = state.velocities.get_mut(&entity_id) {
+                    *velocity = Velocity::zero();
+                    Ok(())
+                } else {
+                    Err("Entity has no velocity component")
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn set_horizontal_velocity(&self, entity_id: u32, speed: f32) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if let Some(velocity) = state.velocities.get_mut(&entity_id) {
+                    *velocity = Velocity::horizontal(speed);
+                    Ok(())
+                } else {
+                    Err("Entity has no velocity component")
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn set_rotation_velocity(
+        &self,
+        entity_id: u32,
+        dx: f32,
+        dy: f32,
+        angular: f32,
+    ) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if let Some(velocity) = state.velocities.get_mut(&entity_id) {
+                    *velocity = Velocity::with_rotation(dx, dy, angular);
+                    Ok(())
+                } else {
+                    Err("Entity has no velocity component")
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
+        }
+    }
+
+    pub fn set_angular_velocity(&self, entity_id: u32, angular: f32) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if let Some(velocity) = state.velocities.get_mut(&entity_id) {
+                    velocity.set_angular(angular);
+                    Ok(())
+                } else {
+                    Err("Entity has no velocity component")
+                }
+            }
+            Err(_) => Err("Failed to borrow game state"),
         }
     }
 

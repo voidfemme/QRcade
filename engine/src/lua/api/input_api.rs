@@ -37,6 +37,7 @@ fn string_to_keycode(key: &str) -> Option<Keycode> {
         "UP" => Some(Keycode::Up),
         "DOWN" => Some(Keycode::Down),
         "RETURN" => Some(Keycode::Return),
+        "TAB" => Some(Keycode::Tab),
         _ => None,
     }
 }
@@ -55,4 +56,3 @@ pub fn register_input_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResu
     lua.globals().set("is_key_pressed", is_key_pressed)?;
     Ok(())
 }
-
