@@ -1,84 +1,127 @@
 # QRcade Game Engine Documentation
-Welcome to the QRcade Game Engine documentation! Whether you're just starting or a seasoned developer, this guide will help you leverage the engine's powerful features to build your game. Below is a categorized overview of the engine's capabilities, along with links to detailed API documentation and guides.
+Welcome to the QRcade Game Engine documentation! This comprehensive guide will help you harness the engine's capabilities to create engaging interactive games. Whether you're building a simple puzzle game or a complex physics-based adventure, you'll find everything you need to bring your vision to life.
 
 ## Getting Started
-To begin coding, follow these steps:
+To begin creating your game, follow these fundamental steps:
 1. **Setup Your Game:** Define the main entry points for your game logic using [Script Callback Functions](script_callbacks.md).
 2. **Create Game Entities:** Use the [Entity API](entity_api.md) to create the building blocks of your game world.
 3. **Design Your Game World:** Utilize the [Tilemap API](tilemap_api.md) for grid-based levels, and the [Transform API](transform_api.md) to position and scale your entities.
 4. **Add Movement:** Control entity motion with the [Velocity API](velocity_api.md) and add physics with the [Gravity API](gravity_api.md).
-5. **Handle Input:** Use the [Input API](input_api.md) to make your game interactive.
-6. **Render Visuals:** Bring your entities to life with the [Renderable API](renderable_api.md).
-7. **Implement Interactions:** Detect and manage interactions between entities using the [Collision API](collision_api.md).
+5. **Handle Input:** Make your game interactive using the [Input API](input_api.md).
+6. **Implement Interactions:** Add drag-and-drop functionality with the [Drag and Drop API](drag_drop_api.md).
+7. **Render Visuals:** Bring your entities to life with the [Renderable API](renderable_api.md).
+8. **Manage Collisions:** Detect and handle interactions between entities using the [Collision API](collision_api.md).
 
 ## Documentation Overview
 
 ### Core Components
-- **[Entity API](entity_api.md):** Manage entities, the fundamental objects in your game world.
-- **[Transform API](transform_api.md):** Adjust position, rotation, and scale for entities.
-- **[Velocity API](velocity_api.md):** Implement movement and control dynamics.
-- **[Gravity API](gravity_api.md):** Add realistic physics with different types of gravity.
+- **[Entity API](entity_api.md):** Create and manage entities, the fundamental objects in your game world.
+- **[Transform API](transform_api.md):** Control position, rotation, and scale for precise entity placement.
+- **[Velocity API](velocity_api.md):** Implement smooth movement and physics-based motion.
+- **[Gravity API](gravity_api.md):** Add realistic physics with customizable gravity effects.
 
-### Gameplay and Logic
-- **[Tilemap API](tilemap_api.md):** Create grid-based worlds and manage terrain.
-- **[Script Callback Functions](script_callbacks.md):** Lifecycle functions for game initialization, updates, and cleanup.
-- **[Collision API](collision_api.md):** Handle entity collisions and interactions.
+### Interaction and Input
+- **[Input API](input_api.md):** Handle keyboard and mouse input for player interaction.
+- **[Drag and Drop API](drag_drop_api.md):** Create interactive objects players can click and drag.
+- **[Collision API](collision_api.md):** Detect and respond to entity collisions and interactions.
 
-### Input and Rendering
-- **[Input API](input_api.md):** Capture player input from the keyboard.
-- **[Renderable API](renderable_api.md):** Add and configure visual elements for entities.
+### World Building
+- **[Tilemap API](tilemap_api.md):** Design levels with grid-based terrain and obstacles.
+- **[Renderable API](renderable_api.md):** Configure visual elements and appearance.
+- **[Script Callback Functions](script_callbacks.md):** Manage game initialization, updates, and cleanup.
 
-## Examples
+## Code Examples
 
-### Setting Up a Basic Game
-Start with `on_start()` to initialize your game world:
+### Basic Game Setup
+Initialize your game world with a draggable object:
 ```lua
 function on_start()
-  local player = create_entity()
-  set_transform(player, 50, 50, 0, 1, 1)
-  add_shape(player, "circle", 255, 0, 0, {radius = 20})
-  add_downward_gravity(player, 1, 10)  -- Add normal gravity
+    -- Create a draggable ball
+    local ball = create_entity()
+    set_transform(ball, 400, 300, 0, 1, 1)
+    add_shape(ball, "circle", 0, 255, 0, {radius = 20})
+    
+    print("Click and drag the green ball!")
 end
 ```
 
-### Making an Entity Move
-Use the Velocity and Input APIs together:
+### Implementing Drag and Drop
+Create interactive objects players can move:
 ```lua
 function on_frame(delta_time)
-  if is_key_pressed("LEFT") then
-    set_velocity(player, -100, 0)
-  elseif is_key_pressed("RIGHT") then
-    set_velocity(player, 100, 0)
-  else
-    set_velocity(player, 0, 0)
-  end
+    if is_mouse_pressed("LEFT") then
+        if not is_dragging(ball) then
+            -- Check if we can start dragging
+            local entity = can_drag_entity(mouse_x, mouse_y)
+            if entity then
+                start_drag(entity, mouse_x, mouse_y)
+            end
+        else
+            -- Update dragged object position
+            update_drag(mouse_x, mouse_y)
+        end
+    else
+        -- Release when mouse button is up
+        end_drag()
+    end
 end
 ```
 
-### Creating Physics Effects
-Create different types of gravity for varied gameplay:
+### Physics and Movement
+Combine gravity with draggable objects:
 ```lua
 -- Create a planet with attractive gravity
 local planet = create_entity()
+set_transform(planet, 400, 300, 0, 1, 1)
 add_shape(planet, "circle", 255, 255, 0, {radius = 32})
 add_attractive_gravity(planet, 5000, 200)
 
--- Create an explosion with repulsive force
-local explosion = create_entity()
-add_shape(explosion, "circle", 255, 0, 0, {radius = 16})
-add_repulsive_gravity(explosion, 1000, 300)
+-- Create draggable satellites
+local satellite = create_entity()
+set_transform(satellite, 500, 300, 0, 1, 1)
+add_shape(satellite, "circle", 0, 255, 255, {radius = 16})
 ```
 
-### Managing Collisions
-Detect and handle collisions between entities:
+### Advanced Interactions
+Combine dragging with collision detection:
 ```lua
-if is_colliding(player, enemy) then
-  print("Collision detected!")
+function on_frame(delta_time)
+    if is_dragging(satellite) then
+        -- Check for collision with planet while dragging
+        if is_colliding(satellite, planet) then
+            -- Handle collision effects
+            set_zero_velocity(satellite)
+            end_drag()
+        end
+    end
 end
 ```
 
+## Feature Integration Tips
+
+### Combining Drag and Drop with Physics
+When implementing draggable objects in a physics-based game:
+1. Consider disabling gravity while objects are being dragged
+2. Smoothly transition between dragged and physics-controlled states
+3. Use collision detection to prevent dragging through solid objects
+
+### Creating Interactive UI Elements
+Build engaging user interfaces using drag and drop:
+1. Create draggable buttons and controls
+2. Implement drag-to-scroll functionality
+3. Design drag-and-drop inventory systems
+
+### Optimizing Performance
+Keep your game running smoothly:
+1. Limit the number of draggable objects on screen
+2. Use appropriate collision shapes for drag detection
+3. Implement efficient entity management
+
 ## Need Help?
-If you're stuck or looking for deeper insights, refer to the respective API documentation or explore the provided examples in each file.
+If you need assistance or want to explore advanced features:
+- Check the specific API documentation for detailed function references
+- Review the example code provided in each section
+- Experiment with combining different APIs for unique gameplay mechanics
 
 ---
-Happy coding and enjoy building with QRcade!
+Happy game development with QRcade!
