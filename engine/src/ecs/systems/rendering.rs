@@ -12,8 +12,6 @@ pub fn render_system(
     if let Ok(state) = state_manager.state.try_borrow() {
         // First render tilemaps (they should be in the background)
         for (&entity, tilemap) in &state.tilemaps {
-            println!("Rendering tilemap for entity {}", entity);
-            
             // Get tilemap dimensions
             let tile_size = tilemap.tile_size;
             
@@ -51,15 +49,9 @@ pub fn render_system(
         // Then render sprites (they should be on top of tilemaps)
         for (&entity, transform) in &state.transforms {
             if let Some(sprite) = state.sprites.get(&entity) {
-                println!(
-                    "Rendering entity {} with asset '{}'",
-                    entity, sprite.asset_name
-                );
 
                 // Get the asset definition from the state manager
                 if let Some(asset) = state_manager.get_asset(&sprite.asset_name) {
-                    println!("Found asset, shape type: {:?}", asset.shape);
-
                     // Let the asset system handle the rendering based on the shape type
                     state_manager.render_asset(
                         asset,

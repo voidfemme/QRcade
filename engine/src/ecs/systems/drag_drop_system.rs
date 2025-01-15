@@ -19,28 +19,48 @@ impl DragDropSystem {
     }
 
     pub fn update(&mut self, input: &InputSystem, state: &mut GameState) {
+        // Get current mouse position and convert to world coordinates
         let (mouse_x, mouse_y) = input.get_mouse_position();
-
-        // convert mouse position to world coordinates
         let world_x = mouse_x as f32;
         let world_y = mouse_y as f32;
 
-        // if we're not dragging, check for entities under mouse
-        if self.dragged_entity.is_none() {
-            self.current_hover = self.find_entity_under_mouse(state, world_x, world_y);
+        // Print debug info
+        println!(
+            "DragDropSystem update - Mouse at: ({}, {})",
+            world_x, world_y
+        );
 
-            // start drag if mouse is pressed over an entity
-            if input.is_mouse_button_pressed(MouseButton::Left) {
-                if let Some(entity) = self.dragged_entity {
-                    if let Some(transform) = state.transforms.get_mut(&entity) {
-                        transform.x = world_x + self.drag_offset_x;
-                        transform.y = world_y + self.drag_offset_y;
-                    }
+        if input.is_mouse_button_pressed(MouseButton::Left) {
+            if let Some(entity) = self.dragged_entity {
+                println!("Updating dragged entity {} position", entity);
+                // Update position of dragged entity
+                if let Some(transform) = state.transforms.get_mut(&entity) {
+                    let new_x = world_x + self.drag_offset_x;
+                    let new_y = world_y + self.drag_offset_y;
+                    println!("Moving entity to: ({}, {})", new_x, new_y);
+                    transform.x = new_x;
+                    transform.y = new_y;
                 }
             } else {
-                // mouse released, end drag
-                self.dragged_entity = None;
+                // Try to start dragging if mouse is over an entity
+                let potential_entity = self.find_entity_under_mouse(state, world_x, world_y);
+                println!("Checking for entity under mouse: {:?}", potential_entity);
+
+                if let Some(entity) = potential_entity {
+                    if let Some(transform) = state.transforms.get(&entity) {
+                        self.drag_offset_x = transform.x - world_x;
+                        self.drag_offset_y = transform.y - world_y;
+                        self.dragged_entity = Some(entity);
+                        println!(
+                            "Started dragging entity {} with offset ({}, {})",
+                            entity, self.drag_offset_x, self.drag_offset_y
+                        );
+                    }
+                }
             }
+        } else if self.dragged_entity.is_some() {
+            println!("Stopped dragging entity {:?}", self.dragged_entity);
+            self.dragged_entity = None;
         }
     }
 

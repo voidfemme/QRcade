@@ -8,6 +8,7 @@ pub use api::{
     gravity_api::register_gravity_api, input_api::register_input_api,
     renderable_api::register_renderable_api, tilemap_api::register_tilemap_api,
     transform_api::register_transform_api, velocity_api::register_velocity_api,
+    drag_drop_api::register_drag_drop_api,
 };
 pub use runtime::state_manager::StateManager;
 

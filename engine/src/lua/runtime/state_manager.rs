@@ -11,14 +11,20 @@ use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::rc::Rc;
+
+struct DraggingState {
+    entity_id: u32,
+    offset_x: f32,
+    offset_y: f32,
+}
 
 pub struct StateManager {
     pub state: Rc<RefCell<GameState>>,
     input: RefCell<InputSystem>,
     assets: AssetManager,
     input_system: Rc<RefCell<InputSystem>>,
+    dragging_state: RefCell<Option<DraggingState>>,
 }
 
 impl StateManager {
@@ -28,7 +34,152 @@ impl StateManager {
             input: RefCell::new(InputSystem::new()),
             assets: AssetManager::new(),
             input_system,
+            dragging_state: RefCell::new(None),
         }
+    }
+
+    pub fn get_entity_at_point(&self, x: f32, y: f32) -> Result<Option<u32>, &'static str> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| "Failed to borrow game state")?;
+
+        println!("Checking for entity at point: ({}, {})", x, y);
+
+        for (&entity_id, transform) in &state.transforms {
+            if let Some(sprite) = state.sprites.get(&entity_id) {
+                if let Some(asset) = self.get_asset(&sprite.asset_name) {
+                    match &asset.shape {
+                        PrimitiveShape::Circle { radius } => {
+                            // The transform position is at the circle's center
+                            // We need to calculate distance from mouse to circle's center
+                            let circle_center_x = transform.x + radius; // Add radius to get to center
+                            let circle_center_y = transform.y + radius;
+
+                            // Calculate distance from mouse to circle center
+                            let dx = x - circle_center_x;
+                            let dy = y - circle_center_y;
+                            let dist_squared = dx * dx + dy * dy;
+
+                            // Make hit area slightly larger for easier interaction
+                            let interaction_radius = radius * 1.5;
+                            let interaction_radius_squared =
+                                interaction_radius * interaction_radius;
+
+                            println!(
+                                "Circle at ({}, {}), center at ({}, {}), radius {}",
+                                transform.x, transform.y, circle_center_x, circle_center_y, radius
+                            );
+                            println!(
+                                "Distance squared from center: {}, interaction radius squared: {}",
+                                dist_squared, interaction_radius_squared
+                            );
+
+                            if dist_squared <= interaction_radius_squared {
+                                println!("Found entity {} under mouse", entity_id);
+                                return Ok(Some(entity_id));
+                            }
+                        }
+                        _ => return Ok(None),
+                    }
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    pub fn start_dragging(
+        &self,
+        entity_id: u32,
+        mouse_x: f32,
+        mouse_y: f32,
+    ) -> Result<(), &'static str> {
+        // Get the entity's transform and shape information
+        let (transform, radius) = {
+            let state = self
+                .state
+                .try_borrow()
+                .map_err(|_| "Failed to borrow game state")?;
+
+            let transform = state
+                .transforms
+                .get(&entity_id)
+                .ok_or("Entity does not have a transform component")?;
+
+            // Get the radius from the sprite asset
+            let radius = if let Some(sprite) = state.sprites.get(&entity_id) {
+                if let Some(asset) = self.get_asset(&sprite.asset_name) {
+                    if let PrimitiveShape::Circle { radius } = asset.shape {
+                        radius
+                    } else {
+                        return Err("Entity is not a circle");
+                    }
+                } else {
+                    return Err("Asset not found");
+                }
+            } else {
+                return Err("Entity has no sprite");
+            };
+
+            (transform.clone(), radius)
+        };
+
+        // Calculate offset from mouse position to entity center
+        // The transform.x and transform.y represent the center of the circle
+        let offset_x = transform.x - mouse_x;
+        let offset_y = transform.y - mouse_y;
+
+        println!(
+            "Started dragging entity {} at center ({}, {}) with offset ({}, {})",
+            entity_id, transform.x, transform.y, offset_x, offset_y
+        );
+
+        // Store dragging state
+        *self.dragging_state.borrow_mut() = Some(DraggingState {
+            entity_id,
+            offset_x,
+            offset_y,
+        });
+
+        Ok(())
+    }
+
+    // Modify update_dragged_entity to use our DraggingState instead of InputSystem
+    pub fn update_dragged_entity(&self, mouse_x: f32, mouse_y: f32) -> Result<(), &'static str> {
+        if let Some(drag_state) = &*self.dragging_state.borrow() {
+            let mut state = self
+                .state
+                .try_borrow_mut()
+                .map_err(|_| "Failed to borrow game state")?;
+
+            if let Some(transform) = state.transforms.get_mut(&drag_state.entity_id) {
+                // Update position based on mouse position and stored offset
+                // This will maintain the same relative position between mouse and circle center
+                transform.x = mouse_x + drag_state.offset_x;
+                transform.y = mouse_y + drag_state.offset_y;
+
+                println!(
+                    "Updated entity {} center to ({}, {})",
+                    drag_state.entity_id, transform.x, transform.y
+                );
+            }
+        }
+        Ok(())
+    }
+
+    // Add method to check if an entity is being dragged using our state
+    pub fn is_entity_dragged(&self, entity_id: u32) -> bool {
+        // Use our DraggingState instead of input system's drag state
+        if let Some(drag_state) = &*self.dragging_state.borrow() {
+            drag_state.entity_id == entity_id
+        } else {
+            false
+        }
+    }
+
+    pub fn end_dragging(&self) -> Result<(), &'static str> {
+        *self.dragging_state.borrow_mut() = None;
+        Ok(())
     }
 
     pub fn is_mouse_button_pressed(&self, button: MouseButton) -> Result<bool, String> {
@@ -462,17 +613,7 @@ impl StateManager {
     }
 
     pub fn get_asset(&self, name: &str) -> Option<&BuiltInAsset> {
-        println!("Attempting to get asset with name: '{}'", name);
-        let result = self.assets.get_by_name(name);
-        println!(
-            "Result: {}",
-            if result.is_some() {
-                "found"
-            } else {
-                "not found"
-            }
-        );
-        result
+        self.assets.get_by_name(name)
     }
 
     pub fn handle_key(&self, keycode: Keycode, pressed: bool) -> Result<(), &'static str> {

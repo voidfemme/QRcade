@@ -7,3 +7,4 @@ pub mod transform_api;
 pub mod velocity_api;
 pub mod tilemap_api;
 pub mod gravity_api;
+pub mod drag_drop_api;

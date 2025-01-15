@@ -5,17 +5,7 @@ use std::collections::HashSet;
 #[derive(Default)]
 pub struct InputSystem {
     pressed_keys: HashSet<Keycode>,
-
-    // mouse state
-    mouse_x: i32,
-    mouse_y: i32,
     pressed_buttons: HashSet<MouseButton>,
-
-    // drag state
-    dragging_entity: Option<u32>,
-    drag_offset_x: f32,
-    drag_offset_y: f32,
-
     // mouse state tracking
     mouse_position: (i32, i32),
 }
@@ -24,20 +14,14 @@ impl InputSystem {
     pub fn new() -> Self {
         Self {
             pressed_keys: HashSet::new(),
-            mouse_x: 0,
-            mouse_y: 0,
             pressed_buttons: HashSet::new(),
-            dragging_entity: None,
-            drag_offset_x: 0.0,
-            drag_offset_y: 0.0,
             mouse_position: (0, 0),
         }
     }
 
     // mouse position updates
     pub fn update_mouse_position(&mut self, x: i32, y: i32) {
-        self.mouse_x = x;
-        self.mouse_y = y;
+        self.mouse_position = (x, y);
     }
 
     // mouse button state

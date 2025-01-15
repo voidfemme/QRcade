@@ -3,17 +3,18 @@ mod ecs;
 mod engine;
 mod lua;
 
-use ecs::{render_system, GameState, InputSystem, MovementSystem, PhysicsSystem};
+use ecs::{render_system, DragDropSystem, GameState, InputSystem, MovementSystem, PhysicsSystem};
 use engine::rendering::{Renderer, Sdl2Renderer};
 use lua::{
-    call_on_end, call_on_frame, call_on_start, register_collision_api, register_entity_api,
-    register_gravity_api, register_input_api, register_renderable_api, register_tilemap_api,
-    register_transform_api, register_velocity_api, StateManager,
+    call_on_end, call_on_frame, call_on_start, register_collision_api, register_drag_drop_api,
+    register_entity_api, register_gravity_api, register_input_api, register_renderable_api,
+    register_tilemap_api, register_transform_api, register_velocity_api, StateManager,
 };
 
 use mlua::{Lua, Result as LuaResult};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::mouse::MouseButton;
 use std::cell::RefCell;
 use std::env;
 use std::fs;
@@ -72,24 +73,32 @@ fn update(
     state_manager: Rc<StateManager>,
     movement_system: &MovementSystem,
     physics_system: &mut PhysicsSystem,
+    drag_drop_system: &mut DragDropSystem,
     input_system: Rc<RefCell<InputSystem>>,
     lua: &Lua,
     delta_time: f32,
 ) -> Result<(), mlua::Error> {
-    // Call Lua update function first to get any new movement commands
-    call_on_frame(lua, delta_time)?;
-
     // Get mouse position and pass it to Lua if needed
     let mouse_position = {
         let input = input_system.borrow();
         input.get_mouse_position()
     };
-
     let (mouse_x, mouse_y) = mouse_position;
+
+    println!("Update loop - Mouse position: ({}, {})", mouse_x, mouse_y);
 
     // expose the mouse position to Lua scripts
     lua.globals().set("mouse_x", mouse_x as f32)?;
     lua.globals().set("mouse_y", mouse_y as f32)?;
+
+    // Call Lua update function first to get any new movement commands
+    call_on_frame(lua, delta_time)?;
+
+    // update drag and drop system - THIS IS CRUCIAL
+    if let Ok(mut state) = state_manager.state.try_borrow_mut() {
+        println!("Updating drag drop system");
+        drag_drop_system.update(&input_system.borrow(), &mut state);
+    }
 
     // Process movement commands
     movement_system.update(delta_time);
@@ -137,6 +146,7 @@ fn main() -> LuaResult<()> {
 
     let movement_system = MovementSystem::new(Rc::clone(&state_manager));
     let mut physics_system = PhysicsSystem::new();
+    let mut drag_drop_system = DragDropSystem::new();
 
     // Create the renderer with configurations
     let mut renderer = Sdl2Renderer::new(
@@ -159,6 +169,7 @@ fn main() -> LuaResult<()> {
     register_tilemap_api(&lua, Rc::clone(&state_manager))?;
     register_velocity_api(&lua, Rc::clone(&state_manager))?;
     register_gravity_api(&lua, Rc::clone(&state_manager))?;
+    register_drag_drop_api(&lua, Rc::clone(&state_manager))?;
 
     // Run setup
     match setup(Rc::clone(&state_manager), &lua, &config.script_path) {
@@ -204,17 +215,50 @@ fn main() -> LuaResult<()> {
                     input_system.borrow_mut().set_key_released(code);
                 }
                 Event::MouseMotion { x, y, .. } => {
+                    println!("Mouse moved to: ({}, {})", x, y);
+                    // this will update both position and any active drag operation
                     input_system.borrow_mut().update_mouse_position(x, y);
+
+                    // If we're dragging an entity, update its position through StateManager
+                    state_manager
+                        .update_dragged_entity(x as f32, y as f32)
+                        .unwrap_or_else(|e| println!("Error updating dragged entity: {}", e));
                 }
                 Event::MouseButtonDown { mouse_btn, .. } => {
+                    println!("Mouse button down: {:?}", mouse_btn);
                     input_system
                         .borrow_mut()
                         .set_mouse_button_pressed(mouse_btn);
+
+                    // If it's the left mouse button, we might start dragging
+                    if mouse_btn == MouseButton::Left {
+                        let (x, y) = input_system.borrow().get_mouse_position();
+
+                        // Try to find an entity under the mouse
+                        if let Ok(Some(entity_id)) =
+                            state_manager.get_entity_at_point(x as f32, y as f32)
+                        {
+                            // Start dragging through StateManager
+                            if let Err(e) =
+                                state_manager.start_dragging(entity_id, x as f32, y as f32)
+                            {
+                                println!("Error starting drag: {}", e);
+                            }
+                        }
+                    }
                 }
                 Event::MouseButtonUp { mouse_btn, .. } => {
+                    println!("Mouse button up: {:?}", mouse_btn);
                     input_system
                         .borrow_mut()
                         .set_mouse_button_released(mouse_btn);
+
+                    // If it was the left button, end any drag operation
+                    if mouse_btn == MouseButton::Left {
+                        state_manager
+                            .end_dragging()
+                            .unwrap_or_else(|e| println!("Error ending drag: {}", e));
+                    }
                 }
                 _ => {}
             }
@@ -226,6 +270,7 @@ fn main() -> LuaResult<()> {
                 Rc::clone(&state_manager),
                 &movement_system,
                 &mut physics_system,
+                &mut drag_drop_system,
                 input_system.clone(),
                 &lua,
                 delta_time,
