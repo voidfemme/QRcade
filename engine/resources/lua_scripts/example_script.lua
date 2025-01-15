@@ -9,7 +9,7 @@ local pos = {
 
 -- Create a green square for the player
 set_transform(player, pos.x, pos.y, 0, 1.0, 1.0)
-add_shape(player, "square", 0, 255, 0, {width = 32, height = 32})
+add_shape(player, "rectangle", 0, 255, 0, {width = 32, height = 32})
 
 -- Movement speed (pixels per second)
 local SPEED = 200

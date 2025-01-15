@@ -3,7 +3,7 @@ function on_start()
     -- Create a red square with custom width and height
     local square_entity = create_entity()
     set_transform(square_entity, 100, 100, 0, 1.0, 1.0)
-    add_shape(square_entity, "square", 255, 0, 0, { width = 64, height = 64 })
+    add_shape(square_entity, "rectangle", 255, 0, 0, { width = 64, height = 64 })
 
     -- Create a green circle with a custom radius
     local circle_entity = create_entity()

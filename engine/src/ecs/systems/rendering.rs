@@ -22,7 +22,7 @@ pub fn render_system(
                 for x in 0..tilemap.width {
                     if let Some(tile) = tilemap.get_tile(x, y) {
                         // Create a square asset for each tile
-                        if let Some(asset) = state_manager.get_asset("square") {
+                        if let Some(asset) = state_manager.get_asset("rectangle") {
                             let x_pos = (x * tile_size) as i32;
                             let y_pos = (y * tile_size) as i32;
                             

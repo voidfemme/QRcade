@@ -3,7 +3,7 @@ mod ecs;
 mod engine;
 mod lua;
 
-use ecs::{movement_system, render_system, GameState};
+use ecs::{render_system, GameState, InputSystem, MovementSystem, PhysicsSystem};
 use engine::rendering::{Renderer, Sdl2Renderer};
 use lua::{
     call_on_end, call_on_frame, call_on_start, register_collision_api, register_entity_api,
@@ -68,12 +68,37 @@ fn setup(
     Ok(())
 }
 
-fn update(state_manager: Rc<StateManager>, lua: &Lua, delta_time: f32) -> Result<(), mlua::Error> {
-    // Call Lua update function
+fn update(
+    state_manager: Rc<StateManager>,
+    movement_system: &MovementSystem,
+    physics_system: &mut PhysicsSystem,
+    input_system: Rc<RefCell<InputSystem>>,
+    lua: &Lua,
+    delta_time: f32,
+) -> Result<(), mlua::Error> {
+    // Call Lua update function first to get any new movement commands
     call_on_frame(lua, delta_time)?;
 
-    // Update physics/movement
-    movement_system(state_manager, delta_time);
+    // Get mouse position and pass it to Lua if needed
+    let mouse_position = {
+        let input = input_system.borrow();
+        input.get_mouse_position()
+    };
+
+    let (mouse_x, mouse_y) = mouse_position;
+
+    // expose the mouse position to Lua scripts
+    lua.globals().set("mouse_x", mouse_x as f32)?;
+    lua.globals().set("mouse_y", mouse_y as f32)?;
+
+    // Process movement commands
+    movement_system.update(delta_time);
+
+    // Update physics simulation
+    if let Ok(mut state) = state_manager.state.try_borrow_mut() {
+        physics_system.update(&mut state, delta_time);
+    }
+
     Ok(())
 }
 
@@ -101,8 +126,17 @@ fn main() -> LuaResult<()> {
     println!("Loading script: {}", config.script_path);
 
     // Initialize Gamestate with debug mode
+    let input_system = Rc::new(RefCell::new(InputSystem::new()));
     let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
-    let state_manager = Rc::new(StateManager::new(Rc::clone(&gamestate_rc)));
+
+    // create StateManager with reference to InputSystem
+    let state_manager = Rc::new(StateManager::new(
+        Rc::clone(&gamestate_rc),
+        Rc::clone(&input_system),
+    ));
+
+    let movement_system = MovementSystem::new(Rc::clone(&state_manager));
+    let mut physics_system = PhysicsSystem::new();
 
     // Create the renderer with configurations
     let mut renderer = Sdl2Renderer::new(
@@ -139,7 +173,7 @@ fn main() -> LuaResult<()> {
         }
     }
 
-    // Set up time
+    // Set up time tracking
     let mut last_time = std::time::Instant::now();
 
     // Main loop simulation
@@ -161,17 +195,26 @@ fn main() -> LuaResult<()> {
                     keycode: Some(code),
                     ..
                 } => {
-                    state_manager
-                        .handle_key(code, true)
-                        .unwrap_or_else(|e| println!("Error handling keydown: {}", e));
+                    input_system.borrow_mut().set_key_pressed(code);
                 }
                 Event::KeyUp {
                     keycode: Some(code),
                     ..
                 } => {
-                    state_manager
-                        .handle_key(code, false)
-                        .unwrap_or_else(|e| println!("Error handling keyup: {}", e));
+                    input_system.borrow_mut().set_key_released(code);
+                }
+                Event::MouseMotion { x, y, .. } => {
+                    input_system.borrow_mut().update_mouse_position(x, y);
+                }
+                Event::MouseButtonDown { mouse_btn, .. } => {
+                    input_system
+                        .borrow_mut()
+                        .set_mouse_button_pressed(mouse_btn);
+                }
+                Event::MouseButtonUp { mouse_btn, .. } => {
+                    input_system
+                        .borrow_mut()
+                        .set_mouse_button_released(mouse_btn);
                 }
                 _ => {}
             }
@@ -179,7 +222,14 @@ fn main() -> LuaResult<()> {
 
         // Update game state
         {
-            update(Rc::clone(&state_manager), &lua, delta_time)?;
+            update(
+                Rc::clone(&state_manager),
+                &movement_system,
+                &mut physics_system,
+                input_system.clone(),
+                &lua,
+                delta_time,
+            )?;
         }
 
         // Render

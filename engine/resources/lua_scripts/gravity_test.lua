@@ -21,7 +21,7 @@ function on_start()
     set_transform(falling_ball, screen_width/3, 100, 0, 1.0, 1.0)
     add_shape(falling_ball, "circle", 255, 0, 0, { radius = 20 })
     set_velocity(falling_ball, 0, 0)  -- Initialize velocity component first
-    add_gravity(falling_ball, 1, 10)  -- Gentle gravity
+    add_downward_gravity(falling_ball, 1, 10)  -- Gentle gravity
     set_horizontal_velocity(falling_ball, 0.1)  -- Set horizontal movement
 
     -- Create ball that floats (blue)

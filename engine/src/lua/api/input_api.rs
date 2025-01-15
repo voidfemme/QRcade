@@ -1,6 +1,7 @@
 use crate::lua::runtime::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult};
 use sdl2::keyboard::Keycode;
+use sdl2::mouse::MouseButton;
 use std::rc::Rc;
 
 fn string_to_keycode(key: &str) -> Option<Keycode> {
@@ -42,7 +43,18 @@ fn string_to_keycode(key: &str) -> Option<Keycode> {
     }
 }
 
+// helper function to convert string to mouse button
+fn string_to_mousebutton(button: &str) -> Option<MouseButton> {
+    match button.to_uppercase().as_str() {
+        "LEFT" => Some(MouseButton::Left),
+        "RIGHT" => Some(MouseButton::Right),
+        "MIDDLE" => Some(MouseButton::Middle),
+        _ => None,
+    }
+}
+
 pub fn register_input_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
+    // register keyboard input function
     let is_key_pressed = {
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, key: String| match string_to_keycode(&key) {
@@ -53,6 +65,23 @@ pub fn register_input_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResu
         })?
     };
 
+    // register mouse button function
+    let is_mouse_pressed = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(
+            move |_, button: String| match string_to_mousebutton(&button) {
+                Some(mouse_btn) => manager
+                    .is_mouse_button_pressed(mouse_btn)
+                    .map_err(mlua::Error::runtime),
+                None => Err(mlua::Error::runtime(format!(
+                    "Invalid mouse button: {}",
+                    button
+                ))),
+            },
+        )?
+    };
+
     lua.globals().set("is_key_pressed", is_key_pressed)?;
+    lua.globals().set("is_mouse_pressed", is_mouse_pressed)?;
     Ok(())
 }

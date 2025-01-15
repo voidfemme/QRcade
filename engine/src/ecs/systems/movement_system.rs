@@ -1,128 +1,76 @@
-use crate::ecs::components::gravity::GravityType;
 use crate::lua::runtime::state_manager::StateManager;
 use std::rc::Rc;
 
-pub fn movement_system(state_manager: Rc<StateManager>, delta_time: f32) {
-    // First collect all velocity changes from gravity
-    let gravity_updates = {
-        if let Ok(state) = state_manager.state.try_borrow() {
-            state
-                .gravities
-                .iter()
-                .filter_map(|(&entity_id, gravity)| {
-                    if !gravity.enabled {
-                        return None;
+/// MovementSystem handles direct movement commands and updates.
+/// It focuses on immediate movement controls rather than physics simulation.
+pub struct MovementSystem {
+    state_manager: Rc<StateManager>,
+}
+
+impl MovementSystem {
+    pub fn new(state_manager: Rc<StateManager>) -> Self {
+        Self { state_manager }
+    }
+
+    pub fn update(&self, delta_time: f32) {
+        // Process movement commands
+        if let Ok(mut state) = self.state_manager.state.try_borrow_mut() {
+            for (&entity_id, velocity) in state.velocities.iter_mut() {
+                // Apply any direct velocity changes from commands
+                if let Some(command) = self.get_pending_movement_command(entity_id) {
+                    match command {
+                        MovementCommand::SetVelocity { dx, dy } => {
+                            velocity.dx = dx;
+                            velocity.dy = dy;
+                        }
+                        MovementCommand::SetHorizontal(speed) => {
+                            velocity.dx = speed;
+                        }
+                        MovementCommand::SetVertical(speed) => {
+                            velocity.dy = speed;
+                        }
+                        MovementCommand::SetAngular(speed) => {
+                            velocity.angular = speed;
+                        }
+                        MovementCommand::Stop => {
+                            velocity.dx = 0.0;
+                            velocity.dy = 0.0;
+                            velocity.angular = 0.0;
+                        }
                     }
+                }
 
-                    state.velocities.get(&entity_id).map(|velocity| {
-                        let (dx, dy) = match gravity.gravity_type {
-                            GravityType::Downward => {
-                                // Only affect vertical velocity
-                                let new_dy = (velocity.dy + gravity.force * delta_time)
-                                    .min(gravity.terminal_velocity);
-                                (velocity.dx, new_dy)
-                            }
-                            GravityType::Attractive | GravityType::Repulsive => {
-                                // Get entity position
-                                if let Some(transform) = state.transforms.get(&entity_id) {
-                                    // Calculate gravitational influence on other entities
-                                    let mut total_dx = velocity.dx;
-                                    let mut total_dy = velocity.dy;
-
-                                    // Look at all other entities
-                                    for (&other_id, other_transform) in &state.transforms {
-                                        if other_id != entity_id {
-                                            let dx = other_transform.x - transform.x;
-                                            let dy = other_transform.y - transform.y;
-                                            let distance_squared = dx * dx + dy * dy;
-
-                                            if distance_squared > 0.0001 {
-                                                // Avoid division by zero
-                                                let distance = distance_squared.sqrt();
-                                                let force_magnitude =
-                                                    gravity.force / distance_squared;
-
-                                                // Normalize direction
-                                                let dir_x = dx / distance;
-                                                let dir_y = dy / distance;
-
-                                                // Attractive pulls toward, Repulsive pushes away
-                                                let multiplier = match gravity.gravity_type {
-                                                    GravityType::Attractive => 1.0,
-                                                    GravityType::Repulsive => -1.0,
-                                                    _ => unreachable!(),
-                                                };
-
-                                                total_dx += dir_x
-                                                    * force_magnitude
-                                                    * multiplier
-                                                    * delta_time;
-                                                total_dy += dir_y
-                                                    * force_magnitude
-                                                    * multiplier
-                                                    * delta_time;
-                                            }
-                                        }
-                                    }
-
-                                    // Apply terminal velocity to both directions for attraction/repulsion
-                                    let speed = (total_dx * total_dx + total_dy * total_dy).sqrt();
-                                    if speed > gravity.terminal_velocity {
-                                        let scale = gravity.terminal_velocity / speed;
-                                        total_dx *= scale;
-                                        total_dy *= scale;
-                                    }
-
-                                    (total_dx, total_dy)
-                                } else {
-                                    (velocity.dx, velocity.dy)
-                                }
-                            }
-                        };
-                        (entity_id, dx, dy)
-                    })
-                })
-                .collect::<Vec<_>>()
-        } else {
-            return;
-        }
-    };
-
-    // Apply gravity updates to velocities
-    if let Ok(mut state) = state_manager.state.try_borrow_mut() {
-        for (entity, dx, dy) in gravity_updates {
-            if let Some(velocity) = state.velocities.get_mut(&entity) {
-                velocity.dx = dx;
-                velocity.dy = dy;
+                // Apply friction if configured
+                if let Some(friction) = self.get_friction(entity_id) {
+                    velocity.dx *= friction.powf(delta_time);
+                    velocity.dy *= friction.powf(delta_time);
+                    velocity.angular *= friction.powf(delta_time);
+                }
             }
         }
     }
 
-    // Then collect all movements we need to make based on final velocities
-    let moves = {
-        if let Ok(state) = state_manager.state.try_borrow() {
-            state
-                .velocities
-                .iter()
-                .filter_map(|(&entity, velocity)| {
-                    state
-                        .transforms
-                        .get(&entity)
-                        .map(|_| (entity, velocity.dx * delta_time, velocity.dy * delta_time))
-                })
-                .collect::<Vec<_>>()
-        } else {
-            return;
-        }
-    };
+    /// Retrieves any pending movement command for an entity
+    fn get_pending_movement_command(&self, entity_id: u32) -> Option<MovementCommand> {
+        // This would interface with your command queue or input system
+        // For now, we'll return None as a placeholder
+        None
+    }
 
-    // Finally apply all the movements
-    if let Ok(mut state) = state_manager.state.try_borrow_mut() {
-        for (entity, dx, dy) in moves {
-            if let Some(transform) = state.transforms.get_mut(&entity) {
-                transform.translate(dx, dy);
-            }
-        }
+    /// Gets the friction coefficient for an entity if it has one
+    fn get_friction(&self, _entity_id: u32) -> Option<f32> {
+        // This could be expanded to look up friction from a component
+        // For now we'll return a default friction
+        Some(0.98)
     }
 }
 
+/// Represents different types of movement commands that can be issued
+#[derive(Debug, Clone)]
+pub enum MovementCommand {
+    SetVelocity { dx: f32, dy: f32 },
+    SetHorizontal(f32),
+    SetVertical(f32),
+    SetAngular(f32),
+    Stop,
+}

@@ -8,23 +8,31 @@ use crate::ecs::systems::collision_system::CollisionSystem;
 use crate::ecs::systems::input_system::InputSystem;
 use crate::{Renderer, Sdl2Renderer};
 use sdl2::keyboard::Keycode;
+use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::rc::Rc;
 
 pub struct StateManager {
     pub state: Rc<RefCell<GameState>>,
     input: RefCell<InputSystem>,
     assets: AssetManager,
+    input_system: Rc<RefCell<InputSystem>>,
 }
 
 impl StateManager {
-    pub fn new(state: Rc<RefCell<GameState>>) -> Self {
+    pub fn new(state: Rc<RefCell<GameState>>, input_system: Rc<RefCell<InputSystem>>) -> Self {
         Self {
             state,
             input: RefCell::new(InputSystem::new()),
             assets: AssetManager::new(),
+            input_system,
         }
+    }
+
+    pub fn is_mouse_button_pressed(&self, button: MouseButton) -> Result<bool, String> {
+        Ok(self.input_system.borrow().is_mouse_button_pressed(button))
     }
 
     pub fn add_downward_gravity(
@@ -482,10 +490,7 @@ impl StateManager {
     }
 
     pub fn is_key_pressed(&self, keycode: Keycode) -> Result<bool, &'static str> {
-        match self.input.try_borrow() {
-            Ok(input) => Ok(input.is_key_pressed(keycode)),
-            Err(_) => Err("Failed to borrow input system"),
-        }
+        Ok(self.input_system.borrow().is_key_pressed(keycode))
     }
 
     pub fn check_collision(&self, entity1: u32, entity2: u32) -> Result<bool, &'static str> {

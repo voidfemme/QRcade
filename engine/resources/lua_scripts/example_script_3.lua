@@ -19,7 +19,7 @@ function on_start()
     -- Position the ground at the bottom-left of the screen
     set_transform(ground, 0, screen_height - 40, 0, 1.0, 1.0)
     -- Create a rectangle shape as wide as the screen with a height of 40
-    add_shape(ground, "square", 100, 100, 100, { width = screen_width, height = 40 })
+    add_shape(ground, "rectangle", 100, 100, 100, { width = screen_width, height = 40 })
 
     -- Create a triangle above the ground
     triangle = create_entity()

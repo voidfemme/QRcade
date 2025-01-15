@@ -52,7 +52,7 @@ local function update_player_position()
 end
 
 -- Create player sprite
-add_shape(player, "square", PLAYER_COLOR[1], PLAYER_COLOR[2], PLAYER_COLOR[3], {width = 20, height = 20})
+add_shape(player, "rectangle", PLAYER_COLOR[1], PLAYER_COLOR[2], PLAYER_COLOR[3], {width = 20, height = 20})
 update_player_position()
 
 -- Helper function to check if a grid position is walkable

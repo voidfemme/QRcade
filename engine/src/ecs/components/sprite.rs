@@ -33,7 +33,7 @@ impl Sprite {
         let shape_data = Some(SpriteShapeData::Rectangle { width, height });
         // We'll need to make sure "rectangle" is a valid asset name in our asset system
         Self {
-            asset_name: "square".to_string(), // Using our built-in square asset
+            asset_name: "rectangle".to_string(), // Using our built-in rectangle asset
             color: (r, g, b),
             shape_data,
         }
