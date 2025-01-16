@@ -51,7 +51,7 @@ impl MovementSystem {
     }
 
     /// Retrieves any pending movement command for an entity
-    fn get_pending_movement_command(&self, entity_id: u32) -> Option<MovementCommand> {
+    fn get_pending_movement_command(&self, _entity_id: u32) -> Option<MovementCommand> {
         // This would interface with your command queue or input system
         // For now, we'll return None as a placeholder
         None

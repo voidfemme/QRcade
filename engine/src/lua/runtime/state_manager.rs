@@ -21,7 +21,6 @@ struct DraggingState {
 
 pub struct StateManager {
     pub state: Rc<RefCell<GameState>>,
-    input: RefCell<InputSystem>,
     assets: AssetManager,
     input_system: Rc<RefCell<InputSystem>>,
     dragging_state: RefCell<Option<DraggingState>>,
@@ -31,7 +30,6 @@ impl StateManager {
     pub fn new(state: Rc<RefCell<GameState>>, input_system: Rc<RefCell<InputSystem>>) -> Self {
         Self {
             state,
-            input: RefCell::new(InputSystem::new()),
             assets: AssetManager::new(),
             input_system,
             dragging_state: RefCell::new(None),
@@ -61,8 +59,7 @@ impl StateManager {
                             let dy = y - circle_center_y;
                             let dist_squared = dx * dx + dy * dy;
 
-                            // Make hit area slightly larger for easier interaction
-                            let interaction_radius = radius * 1.5;
+                            let interaction_radius = radius;
                             let interaction_radius_squared =
                                 interaction_radius * interaction_radius;
 
@@ -80,7 +77,105 @@ impl StateManager {
                                 return Ok(Some(entity_id));
                             }
                         }
-                        _ => return Ok(None),
+                        PrimitiveShape::Rectangle { width, height } => {
+                            // Check if point is inside Rectangle
+                            let rect_left = transform.x;
+                            let rect_right = transform.x + width;
+                            let rect_top = transform.y;
+                            let rect_bottom = transform.y + height;
+
+                            if x >= rect_left
+                                && x <= rect_right
+                                && y >= rect_top
+                                && y <= rect_bottom
+                            {
+                                println!("Found rectangle entity {} under mouse", entity_id);
+                                return Ok(Some(entity_id));
+                            }
+                        }
+                        PrimitiveShape::Triangle {
+                            x1,
+                            y1,
+                            x2,
+                            y2,
+                            x3,
+                            y3,
+                        } => {
+                            // Transform the triangle vertices to world space
+                            let world_x1 = transform.x + x1;
+                            let world_y1 = transform.y + y1;
+                            let world_x2 = transform.x + x2;
+                            let world_y2 = transform.y + y2;
+                            let world_x3 = transform.x + x3;
+                            let world_y3 = transform.y + y3;
+
+                            // Check if point is inside triangle using barycentric coordinates
+                            let area = 0.5
+                                * (-world_y2 * world_x3
+                                    + world_y1 * (-world_x2 + world_x3)
+                                    + world_x1 * (world_y2 - world_y3)
+                                    + world_x2 * world_y3);
+
+                            let s = 1.0 / (2.0 * area)
+                                * (world_y1 * world_x3 - world_x1 * world_y3
+                                    + (world_y3 - world_y1) * x
+                                    + (world_x1 - world_x3) * y);
+
+                            let t = 1.0 / (2.0 * area)
+                                * (world_x1 * world_y2 - world_y1 * world_x2
+                                    + (world_y1 - world_y2) * x
+                                    + (world_x2 - world_x1) * y);
+
+                            if s > 0.0 && t > 0.0 && 1.0 - s - t > 0.0 {
+                                println!("Found triangle entity {} under mouse", entity_id);
+                                return Ok(Some(entity_id));
+                            }
+                        }
+                        PrimitiveShape::Line { x2, y2 } => {
+                            // Transform line points to world space
+                            let world_x1 = transform.x;
+                            let world_y1 = transform.y;
+                            let world_x2 = transform.x + x2;
+                            let world_y2 = transform.y + y2;
+
+                            // Calculate distance from point to line segment
+                            let line_length_squared = (world_x2 - world_x1) * (world_x2 - world_x1)
+                                + (world_y2 - world_y1) * (world_y2 - world_y1);
+
+                            if line_length_squared == 0.0 {
+                                // Line segment is actually a point
+                                let dist = ((x - world_x1) * (x - world_x1)
+                                    + (y - world_y1) * (y - world_y1))
+                                    .sqrt();
+                                if dist <= 5.0 {
+                                    // 5.0 pixels threshold for interaction
+                                    println!("Found point entity {} under mouse", entity_id);
+                                    return Ok(Some(entity_id));
+                                }
+                            } else {
+                                // Calculate projection
+                                let t = ((x - world_x1) * (world_x2 - world_x1)
+                                    + (y - world_y1) * (world_y2 - world_y1))
+                                    / line_length_squared;
+
+                                if (0.0..=1.0).contains(&t) {
+                                    // Calculate closest point on line segment
+                                    let closest_x = world_x1 + t * (world_x2 - world_x1);
+                                    let closest_y = world_y1 + t * (world_y2 - world_y1);
+
+                                    // Calculate distance to closest point
+                                    let dist = ((x - closest_x) * (x - closest_x)
+                                        + (y - closest_y) * (y - closest_y))
+                                        .sqrt();
+
+                                    if dist <= 5.0 {
+                                        // 5.0 pixels threshold for interaction
+                                        println!("Found line entity {} under mouse", entity_id);
+                                        return Ok(Some(entity_id));
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -572,11 +667,23 @@ impl StateManager {
                     let nx3: f32 = params.get("x3").unwrap_or(*x3);
                     let ny3: f32 = params.get("y3").unwrap_or(*y3);
                     crate::ecs::components::sprite::Sprite::new_triangle(
-                        r, g, b, nx1, ny1, nx2, ny2, nx3, ny3,
+                        (r, g, b),
+                        nx1,
+                        ny1,
+                        nx2,
+                        ny2,
+                        nx3,
+                        ny3,
                     )
                 } else {
                     crate::ecs::components::sprite::Sprite::new_triangle(
-                        r, g, b, *x1, *y1, *x2, *y2, *x3, *y3,
+                        (r, g, b),
+                        *x1,
+                        *y1,
+                        *x2,
+                        *y2,
+                        *x3,
+                        *y3,
                     )
                 }
             }
@@ -617,7 +724,7 @@ impl StateManager {
     }
 
     pub fn handle_key(&self, keycode: Keycode, pressed: bool) -> Result<(), &'static str> {
-        match self.input.try_borrow_mut() {
+        match self.input_system.try_borrow_mut() {
             Ok(mut input) => {
                 if pressed {
                     input.set_key_pressed(keycode);
@@ -769,23 +876,6 @@ impl StateManager {
                     );
                 }
             }
-        }
-    }
-
-    pub fn debug_print_tilemap(&self, entity_id: u32) -> Result<(), &'static str> {
-        if let Ok(state) = self.state.try_borrow() {
-            if let Some(tilemap) = state.tilemaps.get(&entity_id) {
-                println!("Tilemap for Entity {}:", entity_id);
-                println!("  Size: {}x{}", tilemap.width, tilemap.height);
-                println!("  Tile size: {}", tilemap.tile_size);
-                println!("  Total tiles: {}", tilemap.tiles.len());
-
-                let occupied_tiles = tilemap.tiles.iter().filter(|tile| tile.is_some()).count();
-                println!("  Occupied tiles: {}", occupied_tiles);
-            }
-            Ok(())
-        } else {
-            Err("Failed to borrow game state")
         }
     }
 

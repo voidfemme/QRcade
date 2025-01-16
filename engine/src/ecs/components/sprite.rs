@@ -47,9 +47,7 @@ impl Sprite {
         }
     }
     pub fn new_triangle(
-        r: u8,
-        g: u8,
-        b: u8,
+        color: (u8, u8, u8),
         x1: f32,
         y1: f32,
         x2: f32,
@@ -62,7 +60,7 @@ impl Sprite {
         });
         Self {
             asset_name: "triangle".to_string(),
-            color: (r, g, b),
+            color: (color.0, color.1, color.2),
             shape_data,
         }
     }

@@ -11,7 +11,7 @@ pub fn render_system(
     // Try to borrow the state for reading
     if let Ok(state) = state_manager.state.try_borrow() {
         // First render tilemaps (they should be in the background)
-        for (&entity, tilemap) in &state.tilemaps {
+        for (&_, tilemap) in &state.tilemaps {
             // Get tilemap dimensions
             let tile_size = tilemap.tile_size;
             

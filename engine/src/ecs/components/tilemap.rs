@@ -138,7 +138,7 @@ impl Tilemap {
                         ));
                     }
                 }
-                Ok(TilemapQueryResult::Row(tiles))
+                Ok(TilemapQueryResult::Column(tiles))
             }
         }
     }

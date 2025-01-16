@@ -5,22 +5,14 @@ use std::collections::HashMap;
 
 pub type Entity = u32;
 
-#[derive(Clone, Copy)]
-pub struct Collider {
-    pub width: f32,
-    pub height: f32,
-}
-
 #[derive(Clone)]
 pub struct GameState {
     pub entities: Vec<Entity>,
-    pub colliders: Vec<Collider>,
     pub transforms: HashMap<Entity, Transform>,
     pub velocities: HashMap<Entity, Velocity>,
     pub sprites: HashMap<Entity, Sprite>,
     pub tilemaps: HashMap<u32, Tilemap>,
     pub gravities: HashMap<Entity, Gravity>,
-    next_entity_id: u32,
 }
 
 // ------------------------
@@ -30,13 +22,11 @@ impl GameState {
     pub fn new() -> Self {
         Self {
             entities: Vec::new(),
-            colliders: Vec::new(),
             transforms: HashMap::new(),
             velocities: HashMap::new(),
             sprites: HashMap::new(),
             tilemaps: HashMap::new(),
             gravities: HashMap::new(),
-            next_entity_id: 0,
         }
     }
 
@@ -63,12 +53,7 @@ impl GameState {
         self.sprites.insert(entity, sprite);
     }
 
-    /// Attach a Collider component
-    pub fn add_collider(&mut self, collider: Collider) {
-        self.colliders.push(collider);
-    }
-
-    pub fn get_velocity(&self, entity_id: u32) -> Option<&Velocity> {
+    pub fn _get_velocity(&self, entity_id: u32) -> Option<&Velocity> {
         self.velocities.get(&entity_id)
     }
 

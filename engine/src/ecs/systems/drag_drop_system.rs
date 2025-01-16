@@ -2,7 +2,6 @@ use crate::ecs::components::component::GameState;
 use crate::ecs::systems::input_system::InputSystem;
 use sdl2::mouse::MouseButton;
 pub struct DragDropSystem {
-    current_hover: Option<u32>,
     dragged_entity: Option<u32>,
     drag_offset_x: f32,
     drag_offset_y: f32,
@@ -11,7 +10,6 @@ pub struct DragDropSystem {
 impl DragDropSystem {
     pub fn new() -> Self {
         Self {
-            current_hover: None,
             dragged_entity: None,
             drag_offset_x: 0.0,
             drag_offset_y: 0.0,

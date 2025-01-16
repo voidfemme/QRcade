@@ -16,6 +16,9 @@ impl Transform {
     }
 
     pub fn rotate(&mut self, angle: f32) {
+        // Add the new angle to the current rotation
+        self.rotation += angle;
+
         // Normalize the angle to keep it between 0 and 2PI
         while self.rotation > std::f32::consts::TAU {
             self.rotation -= std::f32::consts::TAU;

@@ -23,15 +23,6 @@ impl Gravity {
         }
     }
 
-    pub fn default() -> Self {
-        Self {
-            force: 9.8, // Standard gravity
-            enabled: true,
-            terminal_velocity: 10.0,
-            gravity_type: GravityType::Downward,
-        }
-    }
-
     pub fn downward(force: f32, terminal_velocity: f32) -> Self {
         Self::new(force, terminal_velocity, GravityType::Downward)
     }

@@ -16,7 +16,7 @@ impl PhysicsSystem {
 
     pub fn update(&mut self, state: &mut GameState, delta_time: f32) {
         // Phase 1: Force Accumulation
-        self.accumulate_forces(state, delta_time);
+        self.accumulate_forces(state);
 
         // Phase 2: Velocity Integration
         self.integrate_velocities(state, delta_time);
@@ -25,7 +25,7 @@ impl PhysicsSystem {
         self.integrate_positions(state, delta_time);
     }
 
-    fn accumulate_forces(&mut self, state: &GameState, delta_time: f32) {
+    fn accumulate_forces(&mut self, state: &GameState) {
         self.force_accumulator.clear();
 
         // Accumulate gravity forces
@@ -120,4 +120,3 @@ impl PhysicsSystem {
         }
     }
 }
-

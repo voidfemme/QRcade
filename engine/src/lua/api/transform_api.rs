@@ -5,10 +5,13 @@ use std::rc::Rc;
 pub fn register_transform_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
     let set_transform = {
         let manager = Rc::clone(&state_manager);
-        lua.create_function(move |_, (entity_id, x, y, rotation, scale_x, scale_y): (u32, f32, f32, f32, f32, f32)| {
-            manager.set_transform(entity_id, x, y, rotation)
-                .map_err(mlua::Error::runtime)
-        })?
+        lua.create_function(
+            move |_, (entity_id, x, y, rotation): (u32, f32, f32, f32)| {
+                manager
+                    .set_transform(entity_id, x, y, rotation)
+                    .map_err(mlua::Error::runtime)
+            },
+        )?
     };
 
     let get_transform = {
