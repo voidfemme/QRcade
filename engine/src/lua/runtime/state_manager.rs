@@ -95,7 +95,7 @@ impl StateManager {
         mouse_y: f32,
     ) -> Result<(), &'static str> {
         // Get the entity's transform and shape information
-        let (transform, radius) = {
+        let (transform, _) = {
             let state = self
                 .state
                 .try_borrow()
@@ -121,7 +121,7 @@ impl StateManager {
                 return Err("Entity has no sprite");
             };
 
-            (transform.clone(), radius)
+            (*transform, radius)
         };
 
         // Calculate offset from mouse position to entity center
@@ -332,7 +332,7 @@ impl StateManager {
         match self.state.try_borrow() {
             Ok(state) => {
                 // First check if the position is in a walkable tile
-                if let Some(tilemap) = state.tilemaps.get(&tilemap_id) {
+                if state.tilemaps.contains_key(&tilemap_id) {
                     // Check for collisions using the collision system
                     match CollisionSystem::check_entity_tilemap_collision(
                         &state,

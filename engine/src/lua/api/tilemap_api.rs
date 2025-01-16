@@ -16,6 +16,50 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         )?
     };
 
+    // Get tilemap
+    let get_tilemap = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(move |lua, entity_id: u32| {
+            match manager.get_tilemap(entity_id) {
+                Ok(Some(tilemap)) => {
+                    // Create a Lua table to represent the tilemap
+                    let tilemap_table = lua.create_table()?;
+
+                    // Set basic properties
+                    tilemap_table.set("width", tilemap.width)?;
+                    tilemap_table.set("height", tilemap.height)?;
+                    tilemap_table.set("tile_size", tilemap.tile_size)?;
+
+                    // Create a table for tiles
+                    let tiles_table = lua.create_table()?;
+                    for (index, tile_option) in tilemap.tiles.iter().enumerate() {
+                        if let Some(tile) = tile_option {
+                            let tile_table = lua.create_table()?;
+                            tile_table.set("tile_id", tile.tile_id)?;
+                            tile_table.set("walkable", tile.walkable)?;
+
+                            // Create color table
+                            let color_table = lua.create_table()?;
+                            color_table.set(1, tile.color.0)?;
+                            color_table.set(2, tile.color.1)?;
+                            color_table.set(3, tile.color.2)?;
+                            tile_table.set("color", color_table)?;
+
+                            tiles_table.set(index + 1, tile_table)?;
+                        } else {
+                            tiles_table.set(index + 1, lua.create_table()?)?;
+                        }
+                    }
+                    tilemap_table.set("tiles", tiles_table)?;
+
+                    Ok(tilemap_table)
+                }
+                Ok(None) => Ok(lua.create_table()?),
+                Err(e) => Err(mlua::Error::runtime(e)),
+            }
+        })?
+    };
+
     // Set tile
     let set_tile = {
         let manager = Rc::clone(&state_manager);
@@ -181,8 +225,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
     lua.globals().set("query_tilemap", query_tilemap)?;
     lua.globals()
         .set("check_position_walkable", check_position_walkable)?; // Add this line!
+    lua.globals().set("get_tilemap", get_tilemap)?;
 
     Ok(())
 }
-
-

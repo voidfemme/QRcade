@@ -1,4 +1,4 @@
-# Tilemap API
+# [Tilemap](Tilemap) API
 
 [Back to Index](index.md)
 
@@ -20,6 +20,38 @@ Creates a new tilemap and associates it with the specified entity.
 ```lua
 local map = create_entity()
 create_tilemap(map, 10, 10, 32)  -- Creates a 10x10 tilemap with 32x32 pixel tiles
+```
+
+### `get_tilemap(entity_id)`
+
+Retrieves the entire tilemap data structure for the specified entity.
+
+**Parameters**:
+- `entity_id` (number): The entity with the tilemap
+
+**Returns**:
+A table with the following structure:
+```lua
+{
+    width = number,      -- Width of the tilemap in tiles
+    height = number,     -- Height of the tilemap in tiles
+    tile_size = number,  -- Size of each tile in pixels
+    tiles = {           -- Array of tile data
+        [1] = {
+            tile_id = number,    -- Identifier for the tile type
+            walkable = boolean,  -- Whether entities can traverse this tile
+            color = {r, g, b}    -- RGB color values for the tile
+        },
+        -- ... more tiles ...
+    }
+}
+```
+
+**Example**:
+```lua
+local tilemap = get_tilemap(map)
+print("Map dimensions: " .. tilemap.width .. "x" .. tilemap.height)
+print("First tile ID: " .. tilemap.tiles[1].tile_id)
 ```
 
 ### `set_tile(entity_id, x, y, tile_id, walkable, r, g, b)`

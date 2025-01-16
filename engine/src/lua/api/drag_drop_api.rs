@@ -1,7 +1,5 @@
 use crate::lua::runtime::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult};
-use sdl2::keyboard::Keycode;
-use sdl2::mouse::MouseButton;
 use std::rc::Rc;
 
 pub fn register_drag_drop_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
