@@ -1,5 +1,6 @@
 use super::{
-    gravity::Gravity, sprite::Sprite, tilemap::Tilemap, transform::Transform, velocity::Velocity,
+    draggable::Draggable, gravity::Gravity, sprite::Sprite, tilemap::Tilemap, transform::Transform,
+    velocity::Velocity,
 };
 use std::collections::HashMap;
 
@@ -13,6 +14,7 @@ pub struct GameState {
     pub sprites: HashMap<Entity, Sprite>,
     pub tilemaps: HashMap<u32, Tilemap>,
     pub gravities: HashMap<Entity, Gravity>,
+    pub draggables: HashMap<Entity, Draggable>,
 }
 
 // ------------------------
@@ -27,7 +29,18 @@ impl GameState {
             sprites: HashMap::new(),
             tilemaps: HashMap::new(),
             gravities: HashMap::new(),
+            draggables: HashMap::new(),
         }
+    }
+
+    // add a draggable component
+    pub fn add_draggable(&mut self, entity: Entity, draggable: Draggable) {
+        self.draggables.insert(entity, draggable);
+    }
+
+    // remove a draggable component
+    pub fn remove_draggable(&mut self, entity: Entity) {
+        self.draggables.remove(&entity);
     }
 
     /// Create a new entity and return its include its ID
@@ -68,5 +81,6 @@ impl GameState {
         self.transforms.remove(&entity);
         self.velocities.remove(&entity);
         self.sprites.remove(&entity);
+        self.draggables.remove(&entity);
     }
 }

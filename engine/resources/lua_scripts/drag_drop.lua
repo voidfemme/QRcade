@@ -2,9 +2,10 @@
 local SCREEN_WIDTH = 800
 local SCREEN_HEIGHT = 600
 local WALL_THICKNESS = 20
-local GRAVITY_FORCE = 4
+local GRAVITY_FORCE = 200
 local TERMINAL_VELOCITY = 300
 local BOUNCE_DAMPING = 0.8
+local COLLISION_RESPONSE = 5  -- Added constant for collision response strength
 
 -- Colors
 local WALL_COLOR = {128, 128, 128}  -- Gray
@@ -19,6 +20,28 @@ local BALL_COLORS = {
 -- Store our entities
 local walls = {}
 local balls = {}
+
+-- Helper function to handle collision response
+local function handle_collision(ball, wall, vx, vy)
+    local ball_x, ball_y = get_transform(ball)
+    local wall_x, wall_y = get_transform(wall)
+    
+    -- Determine if this is a vertical or horizontal wall
+    local is_vertical = wall == walls[3] or wall == walls[4]  -- Left or right walls
+    
+    -- Apply bounce velocity
+    if is_vertical then
+        set_velocity(ball, vx * -BOUNCE_DAMPING, vy)
+        -- Push ball away from wall more strongly
+        local push_direction = ball_x < wall_x and -COLLISION_RESPONSE or COLLISION_RESPONSE
+        set_transform(ball, ball_x + push_direction, ball_y, 0, 1, 1)
+    else
+        set_velocity(ball, vx, vy * -BOUNCE_DAMPING)
+        -- Push ball away from wall more strongly
+        local push_direction = ball_y < wall_y and -COLLISION_RESPONSE or COLLISION_RESPONSE
+        set_transform(ball, ball_x, ball_y + push_direction, 0, 1, 1)
+    end
+end
 
 -- Helper function to create a wall
 local function create_wall(x, y, width, height)
@@ -39,22 +62,24 @@ local function create_ball(x, y)
     -- Initialize with zero velocity - needed for gravity to work
     set_velocity(ball, 0, 0)
     add_downward_gravity(ball, GRAVITY_FORCE, TERMINAL_VELOCITY)
+    -- Make the ball draggable using our new API
+    make_entity_draggable(ball)
     table.insert(balls, ball)
     return ball
 end
 
 function on_start()
     -- Create walls around the screen
-    -- Bottom
+    -- Bottom wall (stored at index 1)
     create_wall(SCREEN_WIDTH/2, SCREEN_HEIGHT - WALL_THICKNESS/2, 
         SCREEN_WIDTH, WALL_THICKNESS)
-    -- Top
+    -- Top wall (stored at index 2)
     create_wall(SCREEN_WIDTH/2, WALL_THICKNESS/2, 
         SCREEN_WIDTH, WALL_THICKNESS)
-    -- Left
+    -- Left wall (stored at index 3)
     create_wall(WALL_THICKNESS/2, SCREEN_HEIGHT/2, 
         WALL_THICKNESS, SCREEN_HEIGHT)
-    -- Right
+    -- Right wall (stored at index 4)
     create_wall(SCREEN_WIDTH - WALL_THICKNESS/2, SCREEN_HEIGHT/2, 
         WALL_THICKNESS, SCREEN_HEIGHT)
     
@@ -74,58 +99,50 @@ function on_frame(delta_time)
     
     -- Handle dragging
     if is_mouse_pressed("LEFT") then
-        -- Check if we're already dragging something
-        local dragging = false
-        for _, ball in ipairs(balls) do
-            if is_dragging(ball) then
-                dragging = true
-                update_drag(mouse_x, mouse_y)
-                break
-            end
-        end
-        
-        -- If not dragging, try to start a drag
-        if not dragging then
-            local entity = can_drag_entity(mouse_x, mouse_y)
-            if entity then
-                start_drag(entity, mouse_x, mouse_y)
-                -- Disable gravity while dragging
-                set_gravity_enabled(entity, false)
+        local entity = can_drag_entity(mouse_x, mouse_y)
+        if entity then
+            for _, ball in ipairs(balls) do
+                if ball == entity then
+                    start_drag(entity, mouse_x, mouse_y)
+                    set_gravity_enabled(entity, false)
+                    break
+                end
             end
         end
     else
-        -- Find which ball was being dragged (if any)
+        -- Re-enable gravity for any previously dragged ball
         for _, ball in ipairs(balls) do
             if is_dragging(ball) then
-                -- Re-enable gravity when we stop dragging
                 set_gravity_enabled(ball, true)
+                -- Give a small upward boost to prevent immediate floor collision
+                local vx, vy = get_velocity(ball)
+                set_velocity(ball, vx, math.min(vy, 0))
                 break
             end
         end
-        -- Release any dragged objects
         end_drag()
     end
     
     -- Handle collisions and bouncing
     for _, ball in ipairs(balls) do
-        -- Skip if being dragged
         if not is_dragging(ball) then
-            -- Check collisions with walls
+            local vx, vy = get_velocity(ball)
+            
+            -- Check collisions with each wall
             for _, wall in ipairs(walls) do
                 if is_colliding(ball, wall) then
-                    -- Get current velocity
-                    local vx, vy = get_velocity(ball)
-                    
-                    -- Simple bounce - reverse velocity and apply damping
-                    set_velocity(ball, vx * -BOUNCE_DAMPING, vy * -BOUNCE_DAMPING)
-                    
-                    -- Move ball slightly away from wall to prevent sticking
-                    local x, y = get_transform(ball)
-                    if wall == walls[1] or wall == walls[2] then  -- Top/bottom walls
-                        set_transform(ball, x, y + (vy > 0 and -1 or 1), 0, 1, 1)
-                    else  -- Side walls
-                        set_transform(ball, x + (vx > 0 and -1 or 1), y, 0, 1, 1)
-                    end
+                    handle_collision(ball, wall, vx, vy)
+                    -- Get updated velocity after collision
+                    vx, vy = get_velocity(ball)
+                end
+            end
+            
+            -- Additional floor check for extra safety
+            local ball_x, ball_y = get_transform(ball)
+            if ball_y > SCREEN_HEIGHT - WALL_THICKNESS - 20 then  -- 20 is ball radius
+                set_transform(ball, ball_x, SCREEN_HEIGHT - WALL_THICKNESS - 20, 0, 1, 1)
+                if vy > 0 then  -- Only bounce if moving downward
+                    set_velocity(ball, vx, -math.abs(vy) * BOUNCE_DAMPING)
                 end
             end
         end

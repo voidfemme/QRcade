@@ -1,6 +1,7 @@
 use crate::ecs::components::component::GameState;
 use crate::ecs::systems::input_system::InputSystem;
 use sdl2::mouse::MouseButton;
+
 pub struct DragDropSystem {
     dragged_entity: Option<u32>,
     drag_offset_x: f32,
@@ -16,22 +17,51 @@ impl DragDropSystem {
         }
     }
 
-    pub fn update(&mut self, input: &InputSystem, state: &mut GameState) {
-        // Get current mouse position and convert to world coordinates
-        let (mouse_x, mouse_y) = input.get_mouse_position();
-        let world_x = mouse_x as f32;
-        let world_y = mouse_y as f32;
-
-        // Print debug info
+    // Explicitly start a drag operation
+    pub fn start_drag(
+        &mut self,
+        entity: u32,
+        mouse_x: f32,
+        mouse_y: f32,
+        transform_x: f32,
+        transform_y: f32,
+    ) {
+        self.dragged_entity = Some(entity);
+        self.drag_offset_x = transform_x - mouse_x;
+        self.drag_offset_y = transform_y - mouse_y;
         println!(
-            "DragDropSystem update - Mouse at: ({}, {})",
-            world_x, world_y
+            "Started dragging entity {} with offset ({}, {})",
+            entity, self.drag_offset_x, self.drag_offset_y
         );
+    }
 
-        if input.is_mouse_button_pressed(MouseButton::Left) {
-            if let Some(entity) = self.dragged_entity {
-                println!("Updating dragged entity {} position", entity);
-                // Update position of dragged entity
+    pub fn end_drag(&mut self) {
+        if self.dragged_entity.is_some() {
+            println!("Stopped dragging entity {:?}", self.dragged_entity);
+            self.dragged_entity = None;
+        }
+    }
+
+    pub fn update(&mut self, input: &InputSystem, state: &mut GameState) {
+        // Only update position if we're already dragging something
+        if let Some(entity) = self.dragged_entity {
+            if let Some(draggable) = state.draggables.get(&entity) {
+                if !draggable.enabled {
+                    self.end_drag();
+                    return;
+                }
+
+                // Get current mouse position and convert to world coordinates
+                let (mouse_x, mouse_y) = input.get_mouse_position();
+                let world_x = mouse_x as f32;
+                let world_y = mouse_y as f32;
+                // Print debug info
+                println!(
+                    "DragDropSystem update - Mouse dragging entity {} at: ({}, {})",
+                    entity, world_x, world_y
+                );
+
+                // update position of dragged entity
                 if let Some(transform) = state.transforms.get_mut(&entity) {
                     let new_x = world_x + self.drag_offset_x;
                     let new_y = world_y + self.drag_offset_y;
@@ -39,26 +69,13 @@ impl DragDropSystem {
                     transform.x = new_x;
                     transform.y = new_y;
                 }
-            } else {
-                // Try to start dragging if mouse is over an entity
-                let potential_entity = self.find_entity_under_mouse(state, world_x, world_y);
-                println!("Checking for entity under mouse: {:?}", potential_entity);
 
-                if let Some(entity) = potential_entity {
-                    if let Some(transform) = state.transforms.get(&entity) {
-                        self.drag_offset_x = transform.x - world_x;
-                        self.drag_offset_y = transform.y - world_y;
-                        self.dragged_entity = Some(entity);
-                        println!(
-                            "Started dragging entity {} with offset ({}, {})",
-                            entity, self.drag_offset_x, self.drag_offset_y
-                        );
-                    }
+                if !input.is_mouse_button_pressed(MouseButton::Left) {
+                    self.end_drag();
                 }
+            } else {
+                self.end_drag();
             }
-        } else if self.dragged_entity.is_some() {
-            println!("Stopped dragging entity {:?}", self.dragged_entity);
-            self.dragged_entity = None;
         }
     }
 

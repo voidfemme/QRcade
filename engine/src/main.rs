@@ -234,15 +234,21 @@ fn main() -> LuaResult<()> {
                     if mouse_btn == MouseButton::Left {
                         let (x, y) = input_system.borrow().get_mouse_position();
 
-                        // Try to find an entity under the mouse
-                        if let Ok(Some(entity_id)) =
-                            state_manager.get_entity_at_point(x as f32, y as f32)
-                        {
-                            // Start dragging through StateManager
-                            if let Err(e) =
-                                state_manager.start_dragging(entity_id, x as f32, y as f32)
+                        // Try to find an entity under the mouse when we first click
+                        if let Ok(state) = state_manager.state.try_borrow() {
+                            if let Some(entity_id) =
+                                drag_drop_system.find_entity_under_mouse(&state, x as f32, y as f32)
                             {
-                                println!("Error starting drag: {}", e);
+                                // If we found an entity and we have its transform, start dragging
+                                if let Some(transform) = state.transforms.get(&entity_id) {
+                                    drag_drop_system.start_drag(
+                                        entity_id,
+                                        x as f32,
+                                        y as f32,
+                                        transform.x,
+                                        transform.y,
+                                    );
+                                }
                             }
                         }
                     }
@@ -255,9 +261,7 @@ fn main() -> LuaResult<()> {
 
                     // If it was the left button, end any drag operation
                     if mouse_btn == MouseButton::Left {
-                        state_manager
-                            .end_dragging()
-                            .unwrap_or_else(|e| println!("Error ending drag: {}", e));
+                        drag_drop_system.end_drag();
                     }
                 }
                 _ => {}
