@@ -13,7 +13,7 @@ Adds a shape to an entity for rendering.
 **Parameters**
 - `entity_id` (number): The ID of the entity.
 - `shape_name` (string): The type of shape:
-  - "square", "circle", "triangle", "line"
+  - "rectangle", "circle", "triangle", "line"
 - `r`, `g`, `b` (number): RGB color values (0-255).
 - `params` (optional table): Additional parameters for the shape (e.g., size).
 
