@@ -53,4 +53,9 @@ impl InputSystem {
     pub fn is_key_pressed(&self, keycode: Keycode) -> bool {
         self.pressed_keys.contains(&keycode)
     }
+
+    pub fn clear_all_input(&mut self) {
+        self.pressed_keys.clear();
+        self.pressed_buttons.clear();
+    }
 }

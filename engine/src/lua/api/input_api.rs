@@ -1,4 +1,4 @@
-use crate::lua::runtime::state_manager::StateManager;
+use crate::engine::managers::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult};
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;

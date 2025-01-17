@@ -1,4 +1,4 @@
-use crate::lua::runtime::state_manager::StateManager;
+use crate::engine::managers::state_manager::StateManager;
 use std::rc::Rc;
 
 /// MovementSystem handles direct movement commands and updates.

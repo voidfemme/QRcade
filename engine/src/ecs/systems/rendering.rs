@@ -1,5 +1,5 @@
+use crate::engine::managers::state_manager::StateManager;
 use crate::engine::rendering::Sdl2Renderer;
-use crate::lua::runtime::state_manager::StateManager;
 use std::rc::Rc;
 
 pub fn render_system(
@@ -14,7 +14,7 @@ pub fn render_system(
         for (&_, tilemap) in &state.tilemaps {
             // Get tilemap dimensions
             let tile_size = tilemap.tile_size;
-            
+
             // Render each tile
             for y in 0..tilemap.height {
                 for x in 0..tilemap.width {
@@ -23,13 +23,14 @@ pub fn render_system(
                         if let Some(asset) = state_manager.get_asset("rectangle") {
                             let x_pos = (x * tile_size) as i32;
                             let y_pos = (y * tile_size) as i32;
-                            
+
                             // Render the tile using the square asset with explicit size
-                            let shape_data = Some(crate::ecs::components::sprite::SpriteShapeData::Rectangle {
-                                width: tile_size as f32,
-                                height: tile_size as f32,
-                            });
-                            
+                            let shape_data =
+                                Some(crate::ecs::components::sprite::SpriteShapeData::Rectangle {
+                                    width: tile_size as f32,
+                                    height: tile_size as f32,
+                                });
+
                             state_manager.render_asset(
                                 asset,
                                 shape_data.as_ref(),
@@ -49,7 +50,6 @@ pub fn render_system(
         // Then render sprites (they should be on top of tilemaps)
         for (&entity, transform) in &state.transforms {
             if let Some(sprite) = state.sprites.get(&entity) {
-
                 // Get the asset definition from the state manager
                 if let Some(asset) = state_manager.get_asset(&sprite.asset_name) {
                     // Let the asset system handle the rendering based on the shape type

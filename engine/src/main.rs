@@ -4,11 +4,12 @@ mod engine;
 mod lua;
 
 use ecs::{render_system, DragDropSystem, GameState, InputSystem, MovementSystem, PhysicsSystem};
+use engine::managers::state_manager::StateManager;
 use engine::rendering::{Renderer, Sdl2Renderer};
 use lua::{
     call_on_end, call_on_frame, call_on_start, register_collision_api, register_drag_drop_api,
     register_entity_api, register_gravity_api, register_input_api, register_renderable_api,
-    register_tilemap_api, register_transform_api, register_velocity_api, StateManager,
+    register_tilemap_api, register_transform_api, register_velocity_api,
 };
 
 use mlua::{Lua, Result as LuaResult};
@@ -35,7 +36,7 @@ impl Default for EngineConfig {
             debug_mode: false,
             window_width: 800,
             window_height: 600,
-            window_title: "My Engine",
+            window_title: "QRcade",
             script_path: "resources/lua_scripts/example_script.lua".to_string(),
         }
     }
