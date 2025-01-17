@@ -7,13 +7,14 @@ use std::rc::Rc;
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::component::GameState;
 use crate::ecs::components::sprite::SpriteShapeData;
+use crate::ecs::components::text::{HorizontalAlign, Text, TextId, VerticalAlign};
 use crate::ecs::components::tilemap::{Tilemap, TilemapQuery, TilemapQueryResult};
 use crate::ecs::systems::input_system::InputSystem;
 use crate::engine::managers::{
     collision_manager::CollisionManager, drag_drop_manager::DragDropManager,
     entity_manager::EntityManager, gravity_manager::GravityManager, input_manager::InputManager,
-    tilemap_manager::TilemapManager, transform_manager::TransformManager,
-    velocity_manager::VelocityManager, Manager,
+    text_manager::TextManager, tilemap_manager::TilemapManager,
+    transform_manager::TransformManager, velocity_manager::VelocityManager, Manager,
 };
 use crate::{Renderer, Sdl2Renderer};
 
@@ -29,6 +30,7 @@ pub struct StateManager {
     tilemap_manager: TilemapManager,
     drag_drop_manager: DragDropManager,
     input_manager: InputManager,
+    text_manager: TextManager,
 }
 
 impl StateManager {
@@ -44,6 +46,7 @@ impl StateManager {
             tilemap_manager: TilemapManager::new(Rc::clone(&state)),
             drag_drop_manager: DragDropManager::new(Rc::clone(&state)),
             input_manager: InputManager::new_with_input_system(Rc::clone(&state), input_system),
+            text_manager: TextManager::new(Rc::clone(&state)),
         }
     }
 
@@ -280,7 +283,9 @@ impl StateManager {
         self.drag_drop_manager.is_entity_dragged(entity_id)
     }
 
+    // ------------------------------------------------------------
     // Input Management
+    // ------------------------------------------------------------
     pub fn handle_key(&self, keycode: Keycode, pressed: bool) -> Result<(), &'static str> {
         self.input_manager.handle_key(keycode, pressed)
     }
@@ -293,12 +298,66 @@ impl StateManager {
         self.input_manager.is_mouse_button_pressed(button)
     }
 
+    // ------------------------------------------------------------
     // Asset Management
+    // ------------------------------------------------------------
     pub fn get_asset(&self, name: &str) -> Option<&BuiltInAsset> {
         self.assets.get_by_name(name)
     }
 
+    // ------------------------------------------------------------
+    // Text Management
+    // ------------------------------------------------------------
+    pub fn add_text(
+        &self,
+        entity_id: u32,
+        text_id: TextId,
+        color: Option<(u8, u8, u8)>,
+        scale: Option<f32>,
+        h_align: Option<HorizontalAlign>,
+        v_align: Option<VerticalAlign>,
+    ) -> Result<(), &'static str> {
+        self.text_manager
+            .add_text(entity_id, text_id, color, scale, h_align, v_align)
+    }
+
+    pub fn update_text(&self, entity_id: u32, text_id: TextId) -> Result<(), &'static str> {
+        self.text_manager.update_text(entity_id, text_id)
+    }
+
+    pub fn set_text_color(&self, entity_id: u32, color: (u8, u8, u8)) -> Result<(), &'static str> {
+        self.text_manager.set_text_color(entity_id, color)
+    }
+
+    pub fn set_text_scale(&self, entity_id: u32, scale: f32) -> Result<(), &'static str> {
+        self.text_manager.set_text_scale(entity_id, scale)
+    }
+
+    pub fn set_text_alignment(
+        &self,
+        entity_id: u32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+    ) -> Result<(), &'static str> {
+        self.text_manager
+            .set_text_alignment(entity_id, h_align, v_align)
+    }
+
+    pub fn set_text_visibility(&self, entity_id: u32, visible: bool) -> Result<(), &'static str> {
+        self.text_manager.set_text_visibility(entity_id, visible)
+    }
+
+    pub fn remove_text(&self, entity_id: u32) -> Result<(), &'static str> {
+        self.text_manager.remove_text(entity_id)
+    }
+
+    pub fn get_text(&self, entity_id: u32) -> Result<Option<Text>, &'static str> {
+        self.text_manager.get_text(entity_id)
+    }
+
+    // ------------------------------------------------------------
     // Rendering
+    // ------------------------------------------------------------
     pub fn render_asset(
         &self,
         asset: &BuiltInAsset,
@@ -428,7 +487,9 @@ impl StateManager {
         }
     }
 
+    // -----------------
     // Debug
+    // -----------------
     pub fn debug_print_entities(&self) -> Result<(), &'static str> {
         self.entity_manager.debug_print_entities(&self.assets)
     }

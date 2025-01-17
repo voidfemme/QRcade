@@ -11,6 +11,7 @@ pub mod input_manager;
 pub mod tilemap_manager;
 pub mod transform_manager;
 pub mod velocity_manager;
+pub mod text_manager;
 
 pub trait Manager {
     fn new(state: Rc<RefCell<GameState>>) -> Self

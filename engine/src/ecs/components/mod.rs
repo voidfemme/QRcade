@@ -6,3 +6,4 @@ pub mod velocity;
 pub mod tilemap;
 pub mod gravity;
 pub mod draggable;
+pub mod text;

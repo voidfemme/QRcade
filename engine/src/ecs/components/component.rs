@@ -1,6 +1,6 @@
 use super::{
-    draggable::Draggable, gravity::Gravity, sprite::Sprite, tilemap::Tilemap, transform::Transform,
-    velocity::Velocity,
+    draggable::Draggable, gravity::Gravity, sprite::Sprite, text::Text, tilemap::Tilemap,
+    transform::Transform, velocity::Velocity,
 };
 use std::collections::HashMap;
 
@@ -15,6 +15,7 @@ pub struct GameState {
     pub tilemaps: HashMap<u32, Tilemap>,
     pub gravities: HashMap<Entity, Gravity>,
     pub draggables: HashMap<Entity, Draggable>,
+    pub texts: HashMap<Entity, Text>,
 }
 
 // ------------------------
@@ -30,6 +31,7 @@ impl GameState {
             tilemaps: HashMap::new(),
             gravities: HashMap::new(),
             draggables: HashMap::new(),
+            texts: HashMap::new(),
         }
     }
 
@@ -82,5 +84,25 @@ impl GameState {
         self.velocities.remove(&entity);
         self.sprites.remove(&entity);
         self.draggables.remove(&entity);
+    }
+
+    /// Add Text
+    pub fn add_text(&mut self, entity: Entity, text: Text) {
+        self.texts.insert(entity, text);
+    }
+
+    /// Get a reference to a text component
+    pub fn get_text(&self, entity: Entity) -> Option<&Text> {
+        self.texts.get(&entity)
+    }
+
+    /// Get a mutable reference to a Text component
+    pub fn get_text_mut(&mut self, entity: Entity) -> Option<&mut Text> {
+        self.texts.get_mut(&entity)
+    }
+
+    /// Remove a text component from an entity
+    pub fn remove_text(&mut self, entity: Entity) {
+        self.texts.remove(&entity);
     }
 }
