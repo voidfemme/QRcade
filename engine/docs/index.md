@@ -9,7 +9,7 @@ To begin creating your game, follow these fundamental steps:
 4. **Add Movement:** Control entity motion with the [Velocity API](velocity_api.md) and add physics with the [Gravity API](gravity_api.md).
 5. **Handle Input:** Make your game interactive using the [Input API](input_api.md).
 6. **Implement Interactions:** Add drag-and-drop functionality with the [Drag and Drop API](drag_drop_api.md).
-7. **Render Visuals:** Bring your entities to life with the [Renderable API](renderable_api.md).
+7. **Render Visuals:** Bring your entities to life with the [Renderable API](renderable_api.md) and add text with the [Text API](text_api.md).
 8. **Manage Collisions:** Detect and handle interactions between entities using the [Collision API](collision_api.md).
 
 ## Documentation Overview
@@ -28,18 +28,29 @@ To begin creating your game, follow these fundamental steps:
 ### World Building
 - **[Tilemap API](tilemap_api.md):** Design levels with grid-based terrain and obstacles.
 - **[Renderable API](renderable_api.md):** Configure visual elements and appearance.
+- **[Text API](text_api.md):** Add and manage text for UI, scores, and messages.
 - **[Script Callback Functions](script_callbacks.md):** Manage game initialization, updates, and cleanup.
 
 ## Code Examples
 
 ### Basic Game Setup
-Initialize your game world with a draggable object:
+Initialize your game world with a draggable object and score display:
 ```lua
 function on_start()
     -- Create a draggable ball
     local ball = create_entity()
     set_transform(ball, 400, 300, 0, 1, 1)
     add_shape(ball, "circle", 0, 255, 0, {radius = 20})
+    
+    -- Add score display
+    local score = create_entity()
+    set_transform(score, 10, 10, 0)
+    add_text(score, TEXT.SCORE, {
+        color = {255, 255, 255},
+        scale = 1.5,
+        h_align = ALIGN.LEFT,
+        v_align = ALIGN.TOP
+    })
     
     print("Click and drag the green ball!")
 end
@@ -83,12 +94,22 @@ add_shape(satellite, "circle", 0, 255, 255, {radius = 16})
 ```
 
 ### Advanced Interactions
-Combine dragging with collision detection:
+Combine dragging with collision detection and text feedback:
 ```lua
 function on_frame(delta_time)
     if is_dragging(satellite) then
         -- Check for collision with planet while dragging
         if is_colliding(satellite, planet) then
+            -- Show collision message
+            local message = create_entity()
+            set_transform(message, 400, 200, 0)
+            add_text(message, TEXT.GAME_OVER, {
+                color = {255, 0, 0},
+                scale = 2.0,
+                h_align = ALIGN.CENTER,
+                v_align = ALIGN.MIDDLE
+            })
+            
             -- Handle collision effects
             set_zero_velocity(satellite)
             end_drag()
@@ -106,16 +127,18 @@ When implementing draggable objects in a physics-based game:
 3. Use collision detection to prevent dragging through solid objects
 
 ### Creating Interactive UI Elements
-Build engaging user interfaces using drag and drop:
-1. Create draggable buttons and controls
-2. Implement drag-to-scroll functionality
-3. Design drag-and-drop inventory systems
+Build engaging user interfaces using drag and drop and text:
+1. Create draggable buttons and controls with text labels
+2. Implement drag-to-scroll functionality with dynamic text updates
+3. Design drag-and-drop inventory systems with item descriptions
+4. Add visual feedback through color-changing text
 
 ### Optimizing Performance
 Keep your game running smoothly:
 1. Limit the number of draggable objects on screen
 2. Use appropriate collision shapes for drag detection
 3. Implement efficient entity management
+4. Update text content only when necessary
 
 ## Need Help?
 If you need assistance or want to explore advanced features:

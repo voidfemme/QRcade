@@ -7,7 +7,7 @@ pub use api::{
     entity_api::register_entity_api, gravity_api::register_gravity_api,
     input_api::register_input_api, renderable_api::register_renderable_api,
     tilemap_api::register_tilemap_api, transform_api::register_transform_api,
-    velocity_api::register_velocity_api,
+    velocity_api::register_velocity_api, text_api::register_text_api,
 };
 
 pub fn call_on_start(lua: &Lua) -> LuaResult<()> {
