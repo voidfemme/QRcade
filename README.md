@@ -44,9 +44,9 @@ QRcade is currently in early alpha development. While the core systems are funct
 ## 📖 Documentation
 
 The engine includes comprehensive Lua API documentation for game development:
-- [Engine Documentation](docs/index.md)
-- [API Reference](docs/index.md#documentation-overview)
-- [Example Games](resources/lua_scripts/)
+- [Engine Documentation](engine/docs/index.md)
+- [API Reference](engine/docs/index.md#documentation-overview)
+- [Example Games](engine/resources/lua_scripts/)
 
 ## 🛠️ Building from Source
 
