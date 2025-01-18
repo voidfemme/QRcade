@@ -72,7 +72,7 @@ impl StateManager {
         params: Option<mlua::Table>,
     ) -> Result<(), &'static str> {
         self.entity_manager
-            .add_sprite(entity_id, asset_name, r, g, b, params, &self.assets)
+            .add_sprite(entity_id, asset_name, (r, g, b), params, &self.assets)
     }
 
     // ------------------------------------------------------------

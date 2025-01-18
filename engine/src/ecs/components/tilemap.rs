@@ -12,6 +12,7 @@ pub struct TileView {
     pub color: (u8, u8, u8),
 }
 
+#[derive(Debug)]
 pub enum TilemapQuery {
     Dimensions,
     TileAt(u32, u32),

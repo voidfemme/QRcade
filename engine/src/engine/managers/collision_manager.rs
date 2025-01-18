@@ -91,11 +91,9 @@ impl CollisionManager {
             (PrimitiveShape::Circle { radius }, PrimitiveShape::Rectangle { width, height }) => {
                 // Circle-rectangle collision
                 self.check_circle_rectangle_collision(
-                    transform1.x,
-                    transform1.y,
+                    (transform1.x, transform1.y),
                     *radius,
-                    transform2.x,
-                    transform2.y,
+                    (transform2.x, transform2.y),
                     *width,
                     *height,
                 )
@@ -103,11 +101,9 @@ impl CollisionManager {
             (PrimitiveShape::Rectangle { width, height }, PrimitiveShape::Circle { radius }) => {
                 // Rectangle-circle collision (swap order)
                 self.check_circle_rectangle_collision(
-                    transform2.x,
-                    transform2.y,
+                    (transform2.x, transform2.y),
                     *radius,
-                    transform1.x,
-                    transform1.y,
+                    (transform1.x, transform1.y),
                     *width,
                     *height,
                 )
@@ -170,21 +166,19 @@ impl CollisionManager {
     // Helper method for circle-rectangle collision
     fn check_circle_rectangle_collision(
         &self,
-        circle_x: f32,
-        circle_y: f32,
+        circle_xy: (f32, f32),
         radius: f32,
-        rect_x: f32,
-        rect_y: f32,
+        rect_xy: (f32, f32),
         rect_width: f32,
         rect_height: f32,
     ) -> Result<bool, &'static str> {
         // Find closest point on rectangle to circle center
-        let closest_x = circle_x.max(rect_x).min(rect_x + rect_width);
-        let closest_y = circle_y.max(rect_y).min(rect_y + rect_height);
+        let closest_x = circle_xy.0.max(rect_xy.0).min(rect_xy.0 + rect_width);
+        let closest_y = circle_xy.1.max(rect_xy.1).min(rect_xy.1 + rect_height);
 
         // Calculate distance squared between circle center and closest point
-        let dx = circle_x - closest_x;
-        let dy = circle_y - closest_y;
+        let dx = circle_xy.0 - closest_x;
+        let dy = circle_xy.1 - closest_y;
         let distance_squared = dx * dx + dy * dy;
 
         // Compare with radius squared
