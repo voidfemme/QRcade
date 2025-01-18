@@ -25,12 +25,14 @@ pub enum PrimitiveShape {
 }
 
 // A built-in asset that combines a shape with visual properties
+#[derive(Debug)]
 pub struct BuiltInAsset {
     pub shape: PrimitiveShape,
     name: &'static str, // A human-readable shape with visual properties
     id: u32,            // A unique numeric identifier
 }
 
+#[derive(Debug)]
 pub struct AssetManager {
     // Our catalog of built-in assets
     assets: Vec<BuiltInAsset>,

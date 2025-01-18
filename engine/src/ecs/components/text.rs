@@ -64,7 +64,7 @@ impl Default for TextAlignment {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Text {
     pub text_id: TextId,
     pub color: (u8, u8, u8),

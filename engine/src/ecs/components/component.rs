@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 pub type Entity = u32;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GameState {
     pub entities: Vec<Entity>,
     pub transforms: HashMap<Entity, Transform>,

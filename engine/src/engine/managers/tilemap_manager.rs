@@ -4,6 +4,7 @@ use crate::ecs::components::tilemap::{Tile, Tilemap, TilemapQuery, TilemapQueryR
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct TilemapManager {
     state: Rc<RefCell<GameState>>,
 }

@@ -18,6 +18,7 @@ use crate::engine::managers::{
 };
 use crate::{Renderer, Sdl2Renderer};
 
+#[derive(Debug)]
 pub struct StateManager {
     pub state: Rc<RefCell<GameState>>,
     assets: AssetManager,

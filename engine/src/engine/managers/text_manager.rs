@@ -1,9 +1,10 @@
+use super::Manager;
+use crate::ecs::components::component::GameState;
+use crate::ecs::components::text::{HorizontalAlign, Text, TextId, VerticalAlign};
 use std::cell::RefCell;
 use std::rc::Rc;
-use crate::ecs::components::component::GameState;
-use crate::ecs::components::text::{Text, TextId, HorizontalAlign, VerticalAlign};
-use super::Manager;
 
+#[derive(Debug)]
 pub struct TextManager {
     state: Rc<RefCell<GameState>>,
 }
@@ -35,15 +36,15 @@ impl TextManager {
                 }
 
                 let mut text = Text::new(text_id);
-                
+
                 if let Some(color) = color {
                     text = text.with_color(color.0, color.1, color.2);
                 }
-                
+
                 if let Some(scale) = scale {
                     text = text.with_scale(scale);
                 }
-                
+
                 if let Some(h) = h_align {
                     if let Some(v) = v_align {
                         text = text.with_alignment(h, v);
@@ -57,11 +58,7 @@ impl TextManager {
         }
     }
 
-    pub fn update_text(
-        &self,
-        entity_id: u32,
-        text_id: TextId,
-    ) -> Result<(), &'static str> {
+    pub fn update_text(&self, entity_id: u32, text_id: TextId) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
                 if let Some(text) = state.texts.get_mut(&entity_id) {
@@ -75,11 +72,7 @@ impl TextManager {
         }
     }
 
-    pub fn set_text_color(
-        &self,
-        entity_id: u32,
-        color: (u8, u8, u8),
-    ) -> Result<(), &'static str> {
+    pub fn set_text_color(&self, entity_id: u32, color: (u8, u8, u8)) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
                 if let Some(text) = state.texts.get_mut(&entity_id) {
@@ -93,11 +86,7 @@ impl TextManager {
         }
     }
 
-    pub fn set_text_scale(
-        &self,
-        entity_id: u32,
-        scale: f32,
-    ) -> Result<(), &'static str> {
+    pub fn set_text_scale(&self, entity_id: u32, scale: f32) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
                 if let Some(text) = state.texts.get_mut(&entity_id) {
@@ -131,11 +120,7 @@ impl TextManager {
         }
     }
 
-    pub fn set_text_visibility(
-        &self,
-        entity_id: u32,
-        visible: bool,
-    ) -> Result<(), &'static str> {
+    pub fn set_text_visibility(&self, entity_id: u32, visible: bool) -> Result<(), &'static str> {
         match self.state.try_borrow_mut() {
             Ok(mut state) => {
                 if let Some(text) = state.texts.get_mut(&entity_id) {
@@ -161,9 +146,7 @@ impl TextManager {
 
     pub fn get_text(&self, entity_id: u32) -> Result<Option<Text>, &'static str> {
         match self.state.try_borrow() {
-            Ok(state) => {
-                Ok(state.texts.get(&entity_id).cloned())
-            }
+            Ok(state) => Ok(state.texts.get(&entity_id).cloned()),
             Err(_) => Err("Failed to borrow game state"),
         }
     }

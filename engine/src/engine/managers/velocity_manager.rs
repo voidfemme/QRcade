@@ -5,6 +5,7 @@ use crate::ecs::components::velocity::Velocity;
 use crate::engine::managers::Manager;
 use crate::GameState;
 
+#[derive(Debug)]
 pub struct VelocityManager {
     state: Rc<RefCell<GameState>>,
 }
@@ -104,5 +105,4 @@ impl VelocityManager {
             Err(_) => Err("Failed to borrow game state"),
         }
     }
-
 }

@@ -21,6 +21,7 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::rc::Rc;
+use tracing::{debug, error, info, trace};
 
 struct EngineConfig {
     debug_mode: bool,
@@ -86,7 +87,9 @@ fn update(
     };
     let (mouse_x, mouse_y) = mouse_position;
 
-    println!("Update loop - Mouse position: ({}, {})", mouse_x, mouse_y);
+    trace!(mouse_x, mouse_y, "Mouse position updated");
+
+    debug!("Update loop - Mouse position: ({}, {})", mouse_x, mouse_y);
 
     // expose the mouse position to Lua scripts
     lua.globals().set("mouse_x", mouse_x as f32)?;
@@ -97,8 +100,10 @@ fn update(
 
     // update drag and drop system - THIS IS CRUCIAL
     if let Ok(mut state) = state_manager.state.try_borrow_mut() {
-        println!("Updating drag drop system");
+        debug!("Updating drag drop system");
         drag_drop_system.update(&input_system.borrow(), &mut state);
+    } else {
+        error!("Failed to borrow state for drag drop system update");
     }
 
     // Process movement commands
@@ -113,12 +118,23 @@ fn update(
 }
 
 fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer, debug: bool) {
+    tracing::debug!("Starting render frame");
     renderer.clear();
     render_system(state_manager, renderer, 1.0, debug);
     renderer.present();
+    tracing::debug!("Completed render frame");
 }
 
 fn main() -> LuaResult<()> {
+    // Initialize tracing subscriber with a specific filter level
+    tracing_subscriber::fmt()
+        .with_env_filter("info,qrcade=debug")
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .init();
+
     // Parse command line arguments
     let args: Vec<String> = env::args().collect();
 
@@ -133,7 +149,7 @@ fn main() -> LuaResult<()> {
         config.script_path = args[1].clone();
     }
 
-    println!("Loading script: {}", config.script_path);
+    info!("Loading script: {}", config.script_path);
 
     // Initialize Gamestate with debug mode
     let input_system = Rc::new(RefCell::new(InputSystem::new()));
@@ -216,17 +232,17 @@ fn main() -> LuaResult<()> {
                     input_system.borrow_mut().set_key_released(code);
                 }
                 Event::MouseMotion { x, y, .. } => {
-                    println!("Mouse moved to: ({}, {})", x, y);
+                    debug!("Mouse moved to: ({}, {})", x, y);
                     // this will update both position and any active drag operation
                     input_system.borrow_mut().update_mouse_position(x, y);
 
                     // If we're dragging an entity, update its position through StateManager
                     state_manager
                         .update_dragged_entity(x as f32, y as f32)
-                        .unwrap_or_else(|e| println!("Error updating dragged entity: {}", e));
+                        .unwrap_or_else(|e| error!("Error updating dragged entity: {}", e));
                 }
                 Event::MouseButtonDown { mouse_btn, .. } => {
-                    println!("Mouse button down: {:?}", mouse_btn);
+                    debug!("Mouse button down: {:?}", mouse_btn);
                     input_system
                         .borrow_mut()
                         .set_mouse_button_pressed(mouse_btn);
@@ -255,7 +271,7 @@ fn main() -> LuaResult<()> {
                     }
                 }
                 Event::MouseButtonUp { mouse_btn, .. } => {
-                    println!("Mouse button up: {:?}", mouse_btn);
+                    debug!("Mouse button up: {:?}", mouse_btn);
                     input_system
                         .borrow_mut()
                         .set_mouse_button_released(mouse_btn);

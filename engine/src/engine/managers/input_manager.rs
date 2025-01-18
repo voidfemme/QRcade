@@ -6,6 +6,7 @@ use sdl2::mouse::MouseButton;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct InputManager {
     state: Rc<RefCell<GameState>>,
     input_system: Rc<RefCell<InputSystem>>,

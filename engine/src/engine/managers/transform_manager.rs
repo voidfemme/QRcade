@@ -4,6 +4,7 @@ use std::rc::Rc;
 use crate::engine::managers::Manager;
 use crate::GameState;
 
+#[derive(Debug)]
 pub struct TransformManager {
     state: Rc<RefCell<GameState>>,
 }

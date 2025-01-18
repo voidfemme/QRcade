@@ -9,3 +9,5 @@ futures = "0.3.31"
 futures-fs = "0.0.5"
 mlua = { version = "0.10.2", features = ["lua54"] }
 sdl2 = "0.37.0"
+tracing = { version = "0.1.41", features = ["attributes"]}
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt"]}

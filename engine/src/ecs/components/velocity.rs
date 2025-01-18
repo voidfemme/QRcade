@@ -1,6 +1,6 @@
 // for Velocity component
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Velocity {
     pub dx: f32,
     pub dy: f32,

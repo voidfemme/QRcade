@@ -5,6 +5,7 @@ use crate::GameState;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct GravityManager {
     state: Rc<RefCell<GameState>>,
 }

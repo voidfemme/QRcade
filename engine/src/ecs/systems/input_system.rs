@@ -2,7 +2,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use std::collections::HashSet;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct InputSystem {
     pressed_keys: HashSet<Keycode>,
     pressed_buttons: HashSet<MouseButton>,

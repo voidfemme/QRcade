@@ -3,7 +3,7 @@
 // loops over all entities with a Sprite component and a
 // Transform component, draws them in the correct order, etc.
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum SpriteShapeData {
     Rectangle { width: f32, height: f32 },
     Circle { radius: f32 },
@@ -11,7 +11,7 @@ pub enum SpriteShapeData {
     Line { end: (f32, f32) },
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Sprite {
     pub asset_name: String,  // Reference to the built-in asset this sprite uses
     pub color: (u8, u8, u8), // The sprite's current color, allowing for customization

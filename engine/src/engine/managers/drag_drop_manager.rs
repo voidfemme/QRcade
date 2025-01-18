@@ -5,12 +5,14 @@ use crate::assets::asset_manager::{AssetManager, PrimitiveShape};
 use super::Manager;
 
 // Keep track of dragging state
+#[derive(Debug)]
 struct DraggingState {
     entity_id: u32,
     offset_x: f32,
     offset_y: f32,
 }
 
+#[derive(Debug)]
 pub struct DragDropManager {
     state: Rc<RefCell<GameState>>,
     assets: Rc<AssetManager>,

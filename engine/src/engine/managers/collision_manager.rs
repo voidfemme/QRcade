@@ -1,9 +1,10 @@
+use super::Manager;
+use crate::assets::asset_manager::{AssetManager, PrimitiveShape};
+use crate::ecs::components::component::GameState;
 use std::cell::RefCell;
 use std::rc::Rc;
-use crate::ecs::components::component::GameState;
-use crate::assets::asset_manager::{AssetManager, PrimitiveShape};
-use super::Manager;
 
+#[derive(Debug)]
 pub struct CollisionManager {
     state: Rc<RefCell<GameState>>,
 }
@@ -25,16 +26,35 @@ impl CollisionManager {
         entity2: u32,
         assets: &AssetManager,
     ) -> Result<bool, &'static str> {
-        let state = self.state.try_borrow().map_err(|_| "Failed to borrow game state")?;
-        
-        let transform1 = state.transforms.get(&entity1).ok_or("Entity 1 has no transform")?;
-        let transform2 = state.transforms.get(&entity2).ok_or("Entity 2 has no transform")?;
-        
-        let sprite1 = state.sprites.get(&entity1).ok_or("Entity 1 has no sprite")?;
-        let sprite2 = state.sprites.get(&entity2).ok_or("Entity 2 has no sprite")?;
-        
-        let asset1 = assets.get_by_name(&sprite1.asset_name).ok_or("Asset 1 not found")?;
-        let asset2 = assets.get_by_name(&sprite2.asset_name).ok_or("Asset 2 not found")?;
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| "Failed to borrow game state")?;
+
+        let transform1 = state
+            .transforms
+            .get(&entity1)
+            .ok_or("Entity 1 has no transform")?;
+        let transform2 = state
+            .transforms
+            .get(&entity2)
+            .ok_or("Entity 2 has no transform")?;
+
+        let sprite1 = state
+            .sprites
+            .get(&entity1)
+            .ok_or("Entity 1 has no sprite")?;
+        let sprite2 = state
+            .sprites
+            .get(&entity2)
+            .ok_or("Entity 2 has no sprite")?;
+
+        let asset1 = assets
+            .get_by_name(&sprite1.asset_name)
+            .ok_or("Asset 1 not found")?;
+        let asset2 = assets
+            .get_by_name(&sprite2.asset_name)
+            .ok_or("Asset 2 not found")?;
 
         match (&asset1.shape, &asset2.shape) {
             (PrimitiveShape::Circle { radius: r1 }, PrimitiveShape::Circle { radius: r2 }) => {
@@ -45,14 +65,22 @@ impl CollisionManager {
                 let radii_sum = r1 + r2;
                 Ok(distance_squared <= radii_sum * radii_sum)
             }
-            (PrimitiveShape::Rectangle { width: w1, height: h1 }, 
-             PrimitiveShape::Rectangle { width: w2, height: h2 }) => {
+            (
+                PrimitiveShape::Rectangle {
+                    width: w1,
+                    height: h1,
+                },
+                PrimitiveShape::Rectangle {
+                    width: w2,
+                    height: h2,
+                },
+            ) => {
                 // AABB collision for rectangles
                 let left1 = transform1.x;
                 let right1 = transform1.x + w1;
                 let top1 = transform1.y;
                 let bottom1 = transform1.y + h1;
-                
+
                 let left2 = transform2.x;
                 let right2 = transform2.x + w2;
                 let top2 = transform2.y;
@@ -63,15 +91,25 @@ impl CollisionManager {
             (PrimitiveShape::Circle { radius }, PrimitiveShape::Rectangle { width, height }) => {
                 // Circle-rectangle collision
                 self.check_circle_rectangle_collision(
-                    transform1.x, transform1.y, *radius,
-                    transform2.x, transform2.y, *width, *height,
+                    transform1.x,
+                    transform1.y,
+                    *radius,
+                    transform2.x,
+                    transform2.y,
+                    *width,
+                    *height,
                 )
             }
             (PrimitiveShape::Rectangle { width, height }, PrimitiveShape::Circle { radius }) => {
                 // Rectangle-circle collision (swap order)
                 self.check_circle_rectangle_collision(
-                    transform2.x, transform2.y, *radius,
-                    transform1.x, transform1.y, *width, *height,
+                    transform2.x,
+                    transform2.y,
+                    *radius,
+                    transform1.x,
+                    transform1.y,
+                    *width,
+                    *height,
                 )
             }
             // Add more shape combinations as needed...
@@ -87,20 +125,24 @@ impl CollisionManager {
         y: f32,
         assets: &AssetManager,
     ) -> Result<bool, &'static str> {
-        let state = self.state.try_borrow().map_err(|_| "Failed to borrow game state")?;
-        
-        let sprite = state.sprites.get(&entity_id).ok_or("Entity has no sprite")?;
-        let asset = assets.get_by_name(&sprite.asset_name).ok_or("Asset not found")?;
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| "Failed to borrow game state")?;
+
+        let sprite = state
+            .sprites
+            .get(&entity_id)
+            .ok_or("Entity has no sprite")?;
+        let asset = assets
+            .get_by_name(&sprite.asset_name)
+            .ok_or("Asset not found")?;
         let tilemap = state.tilemaps.get(&tilemap_id).ok_or("Tilemap not found")?;
 
         // Get entity bounds based on shape
         let (entity_left, entity_right, entity_top, entity_bottom) = match &asset.shape {
-            PrimitiveShape::Rectangle { width, height } => {
-                (x, x + width, y, y + height)
-            }
-            PrimitiveShape::Circle { radius } => {
-                (x - radius, x + radius, y - radius, y + radius)
-            }
+            PrimitiveShape::Rectangle { width, height } => (x, x + width, y, y + height),
+            PrimitiveShape::Circle { radius } => (x - radius, x + radius, y - radius, y + radius),
             // Add handling for other shapes as needed...
             _ => return Ok(false),
         };

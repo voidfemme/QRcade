@@ -4,6 +4,7 @@ use crate::GameState;
 use crate::assets::asset_manager::{AssetManager, PrimitiveShape};
 use super::Manager;
 
+#[derive(Debug)]
 pub struct EntityManager {
     state: Rc<RefCell<GameState>>,
 }
