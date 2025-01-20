@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
-use crate::ecs::components::component::GameState;
+use crate::ecs::components::gamestate::GameState;
 use crate::ecs::components::sprite::SpriteShapeData;
 use crate::ecs::components::text::{HorizontalAlign, Text, TextId, VerticalAlign};
 use crate::ecs::components::tilemap::{Tilemap, TilemapQuery, TilemapQueryResult};
@@ -254,6 +254,14 @@ impl StateManager {
         self.tilemap_manager.get_tilemap(entity_id)
     }
 
+    pub fn get_tile_size(&self, entity_id: u32) -> Result<u32, &'static str> {
+        self.tilemap_manager.get_tile_size(entity_id)
+    }
+
+    pub fn get_dimensions(&self, entity_id: u32) -> Result<(u32, u32), &'static str> {
+        self.tilemap_manager.get_dimensions(entity_id)
+    }
+
     // ------------------------------------------------------------
     // Drag and Drop Management
     // ------------------------------------------------------------
@@ -332,6 +340,10 @@ impl StateManager {
 
     pub fn set_text_scale(&self, entity_id: u32, scale: f32) -> Result<(), &'static str> {
         self.text_manager.set_text_scale(entity_id, scale)
+    }
+
+    pub fn set_text_value(&self, entity_id: u32, value: String) -> Result<(), &'static str> {
+        self.text_manager.set_text_value(entity_id, value)
     }
 
     pub fn set_text_alignment(

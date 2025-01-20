@@ -154,6 +154,47 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
         })?
     };
 
+    let set_text_value = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(move |_, (entity_id, value): (u32, String)| {
+            manager
+                .set_text_value(entity_id, value)
+                .map_err(mlua::Error::runtime)
+        })?
+    };
+
+    let get_text = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(move |lua, entity_id: u32| -> mlua::Result<mlua::Value> {
+            match manager.get_text(entity_id) {
+                Ok(maybe_text) => {
+                    if let Some(text) = maybe_text {
+                        // Convert the Text struct into a Lua table
+                        let text_table = lua.create_table()?;
+                        text_table.set("text_id", text.get_string())?;
+
+                        // Create color table
+                        let color_table = lua.create_table()?;
+                        color_table.raw_set(1, text.color.0)?;
+                        color_table.raw_set(2, text.color.1)?;
+                        color_table.raw_set(3, text.color.2)?;
+                        text_table.raw_set("color", color_table)?;
+
+                        text_table.raw_set("scale", text.scale)?;
+                        text_table.raw_set("visible", text.visible)?;
+                        if let Some(value) = &text.value {
+                            text_table.set("value", value.clone())?;
+                        }
+                        Ok(mlua::Value::Table(text_table))
+                    } else {
+                        Ok(mlua::Value::Nil)
+                    }
+                }
+                Err(e) => Err(mlua::Error::runtime(e)),
+            }
+        })?
+    };
+
     // Register the text constants table
     lua.globals().set("TEXT", text_constants)?;
     lua.globals().set("ALIGN", align)?;
@@ -165,6 +206,8 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
     lua.globals().set("set_text_scale", set_text_scale)?;
     lua.globals()
         .set("set_text_visibility", set_text_visibility)?;
+    lua.globals().set("set_text_value", set_text_value)?;
+    lua.globals().set("get_text", get_text)?;
 
     Ok(())
 }

@@ -1,6 +1,6 @@
 use crate::assets::asset_manager::AssetManager;
 use crate::assets::asset_manager::{BuiltInAsset, PrimitiveShape};
-use crate::ecs::components::component::GameState;
+use crate::ecs::components::gamestate::GameState;
 use crate::ecs::components::transform::Transform;
 
 pub struct CollisionSystem;

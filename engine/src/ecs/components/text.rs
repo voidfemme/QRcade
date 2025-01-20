@@ -71,6 +71,7 @@ pub struct Text {
     pub scale: f32,
     pub alignment: TextAlignment,
     pub visible: bool,
+    pub value: Option<String>,
 }
 
 impl Text {
@@ -81,6 +82,21 @@ impl Text {
             scale: 1.0,
             alignment: TextAlignment::default(),
             visible: true,
+            value: None,
+        }
+    }
+
+    pub fn with_value(mut self, value: impl ToString) -> Self {
+        self.value = Some(value.to_string());
+        self
+    }
+
+    pub fn get_string(&self) -> String {
+        let base = self.text_id.get_text();
+        if let Some(value) = &self.value {
+            format!("{}{}", base, value)
+        } else {
+            base.to_string()
         }
     }
 
@@ -103,7 +119,7 @@ impl Text {
         self.visible = visible;
     }
 
-    pub fn get_string(&self) -> &'static str {
-        self.text_id.get_text()
+    pub fn set_text_value(&mut self, value: String) {
+        self.value = Some(value);
     }
 }

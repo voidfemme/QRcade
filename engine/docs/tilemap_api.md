@@ -159,3 +159,42 @@ for _, tile in ipairs(row) do
     print("Tile at column " .. tile.position)
 end
 ```
+
+### get_dimensions(entity_id)
+
+Retrieves the width and height of the tilemap in tiles. Useful for checking boundaries
+before moving or placing objects.
+
+**Parameters**
+- `entity_id` (number): The entity with the tilemap
+
+**Returns**
+- `Width` (number), `height` (number)
+
+**Example:**
+```lua
+local w, h = get_dimensions(map)
+print("Tilemap size: " .. w .. " wide, " .. h .. " high")
+```
+
+### get_tile_size(entity_id)
+
+Retrieves the size of each tile in pixels for the specified tilemap.
+
+**Parameters**:
+- `entity_id` (number): The entity with the tilemap
+
+**Returns**:
+- `tile_size` (number)
+
+**Example**:
+```lua
+local tile_size = get_tile_size(map)
+print("Each tile is ", .. tile_size .. " pixels wide/high")
+```
+
+---
+
+**Note**: The functions above assume you have already created (and attached) a tilemap to
+your entity using `create_tilemap`. Make sure to create your tilemap first before calling
+the other tilemap-related functions.

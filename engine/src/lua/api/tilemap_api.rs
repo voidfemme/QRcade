@@ -217,6 +217,24 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         )?
     };
 
+    let get_dimensions = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(move |_, entity_id: u32| {
+            manager
+                .get_dimensions(entity_id)
+                .map_err(mlua::Error::runtime)
+        })?
+    };
+
+    let get_tile_size = {
+        let manager = Rc::clone(&state_manager);
+        lua.create_function(move |_, entity_id: u32| {
+            manager
+                .get_tile_size(entity_id)
+                .map_err(mlua::Error::runtime)
+        })?
+    };
+
     // Register functions
     lua.globals().set("create_tilemap", create_tilemap)?;
     lua.globals().set("set_tile", set_tile)?;
@@ -226,6 +244,8 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
     lua.globals()
         .set("check_position_walkable", check_position_walkable)?; // Add this line!
     lua.globals().set("get_tilemap", get_tilemap)?;
+    lua.globals().set("get_dimensions", get_dimensions)?;
+    lua.globals().set("get_tile_size", get_tile_size)?;
 
     Ok(())
 }

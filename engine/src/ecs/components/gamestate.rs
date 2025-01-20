@@ -105,4 +105,11 @@ impl GameState {
     pub fn remove_text(&mut self, entity: Entity) {
         self.texts.remove(&entity);
     }
+
+    /// Set the value of the text
+    pub fn set_text_value(&mut self, entity_id: u32, value: String) {
+        if let Some(text) = self.texts.get_mut(&entity_id) {
+            text.value = Some(value);
+        }
+    }
 }

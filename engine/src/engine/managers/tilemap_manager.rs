@@ -1,5 +1,5 @@
 use super::Manager;
-use crate::ecs::components::component::GameState;
+use crate::ecs::components::gamestate::GameState;
 use crate::ecs::components::tilemap::{Tile, Tilemap, TilemapQuery, TilemapQueryResult};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -322,4 +322,3 @@ impl TilemapManager {
         }
     }
 }
-

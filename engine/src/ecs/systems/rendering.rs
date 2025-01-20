@@ -1,6 +1,8 @@
 use crate::engine::managers::state_manager::StateManager;
-use crate::engine::rendering::Sdl2Renderer;
+use crate::engine::rendering::{Renderer, Sdl2Renderer};
+use sdl2::pixels::Color;
 use std::rc::Rc;
+use tracing::warn;
 
 pub fn render_system(
     state_manager: Rc<StateManager>,
@@ -64,8 +66,41 @@ pub fn render_system(
                         debug,
                     );
                 }
+            } else if let Some(text) = state.texts.get(&entity) {
+                // Only show warning if entity has neither sprite nor text
+                if !text.visible {
+                    continue;
+                }
+
+                let color = Color::RGB(text.color.0, text.color.1, text.color.2);
+                let content = text.get_string();
+
+                renderer.draw_text(
+                    content,
+                    transform.x as i32,
+                    transform.y as i32,
+                    color,
+                    text.scale,
+                );
+
+                if debug {
+                    // draw debug info for text entities
+                    renderer.draw_bounding_box(
+                        transform.x as i32,
+                        transform.y as i32,
+                        20, // TODO: Placeholder size, calculate actual text bounds later
+                        20,
+                        Color::RGB(255, 255, 255),
+                    );
+                }
             } else {
-                println!("Warning: Entity {} has transform but no sprite", entity);
+                // Only show warning if entity has neither sprite nor text
+                if !state.texts.contains_key(&entity) {
+                    warn!(
+                        "Warning: Entity {} has transform but no sprite or text",
+                        entity
+                    );
+                }
             }
         }
     }

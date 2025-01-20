@@ -15,6 +15,7 @@ pub trait Renderer {
     fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, color: Color);
     fn draw_bounding_box(&mut self, x: i32, y: i32, width: u32, height: u32, color: Color);
     fn draw_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32, color: Color);
+    fn draw_text(&mut self, text: String, x: i32, y: i32, color: Color, scale: f32);
 }
 
 // Re-export SDL renderer implementation

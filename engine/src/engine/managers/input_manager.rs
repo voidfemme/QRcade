@@ -1,5 +1,5 @@
 use super::Manager;
-use crate::ecs::components::component::GameState;
+use crate::ecs::components::gamestate::GameState;
 use crate::ecs::systems::input_system::InputSystem;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;

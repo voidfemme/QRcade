@@ -1,4 +1,4 @@
-pub mod component;
+pub mod gamestate;
 pub mod entity;
 pub mod sprite;
 pub mod transform;

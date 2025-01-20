@@ -1,6 +1,6 @@
 use super::Manager;
 use crate::assets::asset_manager::{AssetManager, PrimitiveShape};
-use crate::ecs::components::component::GameState;
+use crate::ecs::components::gamestate::GameState;
 use std::cell::RefCell;
 use std::rc::Rc;
 

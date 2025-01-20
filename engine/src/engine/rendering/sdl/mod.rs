@@ -2,19 +2,22 @@ use crate::engine::rendering::Renderer;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
+use sdl2::ttf::{self, Sdl2TtfContext};
 use sdl2::video::Window;
 use sdl2::Sdl;
 
 pub struct Sdl2Renderer {
     pub sdl_context: Sdl,
     pub canvas: Canvas<Window>,
+    ttf_context: Sdl2TtfContext,
+    font_path: String,
+    font_size: u16,
 }
 
 impl Sdl2Renderer {
     pub fn new(title: &str, width: u32, height: u32) -> Self {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-
         let window = video_subsystem
             .window(title, width, height)
             .position_centered()
@@ -22,10 +25,14 @@ impl Sdl2Renderer {
             .unwrap();
 
         let canvas = window.into_canvas().build().unwrap();
+        let ttf_context = ttf::init().unwrap();
 
         Sdl2Renderer {
             sdl_context,
             canvas,
+            ttf_context,
+            font_path: "resources/fonts/LiberationSans-Regular.ttf".to_string(),
+            font_size: 24,
         }
     }
 }
@@ -149,5 +156,32 @@ impl Renderer for Sdl2Renderer {
         self.draw_line(right, top, right, bottom, color); // Right
         self.draw_line(right, bottom, left, bottom, color); // Bottom
         self.draw_line(left, bottom, left, top, color); // Left
+    }
+
+    fn draw_text(&mut self, text: String, x: i32, y: i32, color: Color, scale: f32) {
+        let font = self
+            .ttf_context
+            .load_font(&self.font_path, self.font_size)
+            .unwrap();
+        let surface = font.render(&text).blended(color).unwrap();
+
+        let texture_creator = self.canvas.texture_creator();
+        let texture = texture_creator
+            .create_texture_from_surface(&surface)
+            .unwrap();
+
+        let scaled_width = (surface.width() as f32 * scale) as u32;
+        let scaled_height = (surface.height() as f32 * scale) as u32;
+
+        let dest = Rect::new(
+            x - (scaled_width / 2) as i32,
+            y - (scaled_height / 2) as i32,
+            scaled_width,
+            scaled_height,
+        );
+
+        self.canvas
+            .copy(&texture, None, dest)
+            .expect("Failed to copy texture to canvas");
     }
 }

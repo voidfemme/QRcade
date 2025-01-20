@@ -1,5 +1,5 @@
 use super::Manager;
-use crate::ecs::components::component::GameState;
+use crate::ecs::components::gamestate::GameState;
 use crate::ecs::components::text::{HorizontalAlign, Text, TextId, VerticalAlign};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -252,5 +252,28 @@ impl TextManager {
             }
         }
     }
-}
 
+    pub fn set_text_value(&self, entity_id: u32, value: String) -> Result<(), &'static str> {
+        match self.state.try_borrow_mut() {
+            Ok(mut state) => {
+                if let Some(text) = state.texts.get_mut(&entity_id) {
+                    text.set_text_value(value);
+                    Ok(())
+                } else {
+                    warn!(
+                        entity_id,
+                        "Attempted to set text on entity without text component"
+                    );
+                    Err("Entity has no text component")
+                }
+            }
+            Err(e) => {
+                error!(
+                    ?e,
+                    entity_id, "Failed to borrow game state while setting text value"
+                );
+                Err("Failed to borrow game state")
+            }
+        }
+    }
+}
