@@ -9,3 +9,4 @@ pub mod tilemap_api;
 pub mod gravity_api;
 pub mod drag_drop_api;
 pub mod text_api;
+pub mod timer_api;

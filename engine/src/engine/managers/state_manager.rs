@@ -1,22 +1,23 @@
-use sdl2::keyboard::Keycode;
-use sdl2::mouse::MouseButton;
-use sdl2::pixels::Color;
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::assets::asset_manager::{AssetManager, BuiltInAsset, PrimitiveShape};
 use crate::ecs::components::gamestate::GameState;
 use crate::ecs::components::sprite::SpriteShapeData;
 use crate::ecs::components::text::{HorizontalAlign, Text, TextId, VerticalAlign};
 use crate::ecs::components::tilemap::{Tilemap, TilemapQuery, TilemapQueryResult};
+use crate::ecs::components::timer::TimerId;
 use crate::ecs::systems::input_system::InputSystem;
 use crate::engine::managers::{
     collision_manager::CollisionManager, drag_drop_manager::DragDropManager,
     entity_manager::EntityManager, gravity_manager::GravityManager, input_manager::InputManager,
-    text_manager::TextManager, tilemap_manager::TilemapManager,
+    text_manager::TextManager, tilemap_manager::TilemapManager, timer_manager::TimerManager,
     transform_manager::TransformManager, velocity_manager::VelocityManager, Manager,
 };
 use crate::{Renderer, Sdl2Renderer};
+use mlua::Function;
+use sdl2::keyboard::Keycode;
+use sdl2::mouse::MouseButton;
+use sdl2::pixels::Color;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct StateManager {
@@ -32,6 +33,7 @@ pub struct StateManager {
     drag_drop_manager: DragDropManager,
     input_manager: InputManager,
     text_manager: TextManager,
+    timer_manager: TimerManager,
 }
 
 impl StateManager {
@@ -48,6 +50,7 @@ impl StateManager {
             drag_drop_manager: DragDropManager::new(Rc::clone(&state)),
             input_manager: InputManager::new_with_input_system(Rc::clone(&state), input_system),
             text_manager: TextManager::new(Rc::clone(&state)),
+            timer_manager: TimerManager::new(Rc::clone(&state)),
         }
     }
 
@@ -366,6 +369,28 @@ impl StateManager {
 
     pub fn get_text(&self, entity_id: u32) -> Result<Option<Text>, &'static str> {
         self.text_manager.get_text(entity_id)
+    }
+
+    // -----------------
+    // Timer
+    // -----------------
+
+    pub fn set_interval(
+        &mut self,
+        lua_callback: Function,
+        interval: f32,
+        repeat: bool,
+    ) -> Result<TimerId, &'static str> {
+        self.timer_manager
+            .set_interval(lua_callback, interval, repeat)
+    }
+
+    pub fn clear_timer(&mut self, timer_id: TimerId) -> Result<(), &'static str> {
+        self.timer_manager.clear_timer(timer_id)
+    }
+
+    pub fn update_timer(&mut self, delta_time: f32) -> Result<(), &'static str> {
+        self.timer_manager.update_timer(delta_time)
     }
 
     // ------------------------------------------------------------

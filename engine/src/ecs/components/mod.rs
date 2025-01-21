@@ -1,9 +1,10 @@
-pub mod gamestate;
+pub mod draggable;
 pub mod entity;
+pub mod gamestate;
+pub mod gravity;
 pub mod sprite;
+pub mod text;
+pub mod tilemap;
+pub mod timer;
 pub mod transform;
 pub mod velocity;
-pub mod tilemap;
-pub mod gravity;
-pub mod draggable;
-pub mod text;

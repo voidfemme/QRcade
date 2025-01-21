@@ -9,7 +9,8 @@ use engine::rendering::{Renderer, Sdl2Renderer};
 use lua::{
     call_on_end, call_on_frame, call_on_start, register_collision_api, register_drag_drop_api,
     register_entity_api, register_gravity_api, register_input_api, register_renderable_api,
-    register_text_api, register_tilemap_api, register_transform_api, register_velocity_api,
+    register_text_api, register_tilemap_api, register_timer_api, register_transform_api,
+    register_velocity_api,
 };
 
 use mlua::{Lua, Result as LuaResult};
@@ -188,6 +189,7 @@ fn main() -> LuaResult<()> {
     register_gravity_api(&lua, Rc::clone(&state_manager))?;
     register_drag_drop_api(&lua, Rc::clone(&state_manager))?;
     register_text_api(&lua, Rc::clone(&state_manager))?;
+    register_timer_api(&lua, Rc::clone(&state_manager))?;
 
     // Run setup
     match setup(Rc::clone(&state_manager), &lua, &config.script_path) {

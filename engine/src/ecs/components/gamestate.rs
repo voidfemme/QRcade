@@ -1,6 +1,12 @@
 use super::{
-    draggable::Draggable, gravity::Gravity, sprite::Sprite, text::Text, tilemap::Tilemap,
-    transform::Transform, velocity::Velocity,
+    draggable::Draggable,
+    gravity::Gravity,
+    sprite::Sprite,
+    text::Text,
+    tilemap::Tilemap,
+    timer::{Timer, TimerId},
+    transform::Transform,
+    velocity::Velocity,
 };
 use std::collections::HashMap;
 
@@ -16,6 +22,8 @@ pub struct GameState {
     pub gravities: HashMap<Entity, Gravity>,
     pub draggables: HashMap<Entity, Draggable>,
     pub texts: HashMap<Entity, Text>,
+    pub timers: HashMap<TimerId, Timer>,
+    pub next_timer_id: u32,
 }
 
 // ------------------------
@@ -32,7 +40,20 @@ impl GameState {
             gravities: HashMap::new(),
             draggables: HashMap::new(),
             texts: HashMap::new(),
+            timers: HashMap::new(),
+            next_timer_id: 0,
         }
+    }
+
+    pub fn add_timer(&mut self, timer: Timer) -> TimerId {
+        let id = TimerId(self.next_timer_id);
+        self.next_timer_id += 1;
+        self.timers.insert(id, timer);
+        id
+    }
+
+    pub fn remove_timer(&mut self, id: TimerId) -> bool {
+        self.timers.remove(&id).is_some()
     }
 
     // add a draggable component
