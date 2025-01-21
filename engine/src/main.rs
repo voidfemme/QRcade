@@ -60,7 +60,7 @@ fn load_lua_script(lua: &Lua, filepath: &str) -> Result<(), mlua::Error> {
 }
 
 fn setup(
-    _state_manager: Rc<StateManager>,
+    _state_manager: Rc<RefCell<StateManager>>,
     lua: &Lua,
     script_path: &str,
 ) -> Result<(), mlua::Error> {
@@ -73,7 +73,7 @@ fn setup(
 }
 
 fn update(
-    state_manager: Rc<StateManager>,
+    state_manager: Rc<RefCell<StateManager>>,
     movement_system: &MovementSystem,
     physics_system: &mut PhysicsSystem,
     drag_drop_system: &mut DragDropSystem,
@@ -100,7 +100,7 @@ fn update(
     call_on_frame(lua, delta_time)?;
 
     // update drag and drop system - THIS IS CRUCIAL
-    if let Ok(mut state) = state_manager.state.try_borrow_mut() {
+    if let Ok(mut state) = state_manager.borrow().state.try_borrow_mut() {
         debug!("Updating drag drop system");
         drag_drop_system.update(&input_system.borrow(), &mut state);
     } else {
@@ -111,14 +111,14 @@ fn update(
     movement_system.update(delta_time);
 
     // Update physics simulation
-    if let Ok(mut state) = state_manager.state.try_borrow_mut() {
+    if let Ok(mut state) = state_manager.borrow().state.try_borrow_mut() {
         physics_system.update(&mut state, delta_time);
     }
 
     Ok(())
 }
 
-fn render(state_manager: Rc<StateManager>, renderer: &mut Sdl2Renderer, debug: bool) {
+fn render(state_manager: Rc<RefCell<StateManager>>, renderer: &mut Sdl2Renderer, debug: bool) {
     tracing::debug!("Starting render frame");
     renderer.clear();
     render_system(state_manager, renderer, 1.0, debug);
@@ -157,10 +157,10 @@ fn main() -> LuaResult<()> {
     let gamestate_rc = Rc::new(RefCell::new(GameState::new()));
 
     // create StateManager with reference to InputSystem
-    let state_manager = Rc::new(StateManager::new(
+    let state_manager = Rc::new(RefCell::new(StateManager::new(
         Rc::clone(&gamestate_rc),
         Rc::clone(&input_system),
-    ));
+    )));
 
     let movement_system = MovementSystem::new(Rc::clone(&state_manager));
     let mut physics_system = PhysicsSystem::new();
@@ -195,7 +195,7 @@ fn main() -> LuaResult<()> {
     match setup(Rc::clone(&state_manager), &lua, &config.script_path) {
         Ok(_) => {
             if config.debug_mode {
-                state_manager.debug_print_entities().unwrap();
+                state_manager.borrow().debug_print_entities().unwrap();
             }
         }
         Err(e) => {
@@ -241,6 +241,7 @@ fn main() -> LuaResult<()> {
 
                     // If we're dragging an entity, update its position through StateManager
                     state_manager
+                        .borrow_mut()
                         .update_dragged_entity(x as f32, y as f32)
                         .unwrap_or_else(|e| error!("Error updating dragged entity: {}", e));
                 }
@@ -255,7 +256,7 @@ fn main() -> LuaResult<()> {
                         let (x, y) = input_system.borrow().get_mouse_position();
 
                         // Try to find an entity under the mouse when we first click
-                        if let Ok(state) = state_manager.state.try_borrow() {
+                        if let Ok(state) = state_manager.borrow().state.try_borrow() {
                             if let Some(entity_id) =
                                 drag_drop_system.find_entity_under_mouse(&state, x as f32, y as f32)
                             {

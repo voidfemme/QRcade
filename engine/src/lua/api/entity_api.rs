@@ -1,12 +1,13 @@
 use crate::engine::managers::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult};
 use std::rc::Rc;
+use std::cell::RefCell;
 
-pub fn register_entity_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
+pub fn register_entity_api(lua: &Lua, state_manager: Rc<RefCell<StateManager>>) -> LuaResult<()> {
     // create_entity
     let create_entity = {
         let manager = Rc::clone(&state_manager);
-        lua.create_function(move |_, ()| manager.create_entity().map_err(mlua::Error::runtime))?
+        lua.create_function(move |_, ()| manager.borrow_mut().create_entity().map_err(mlua::Error::runtime))?
     };
 
     // destroy_entity
@@ -14,6 +15,7 @@ pub fn register_entity_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRes
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, entity_id: u32| {
             manager
+                .borrow_mut()
                 .destroy_entity(entity_id)
                 .map_err(mlua::Error::runtime)
         })?

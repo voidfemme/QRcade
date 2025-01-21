@@ -1,20 +1,21 @@
 use crate::engine::managers::state_manager::StateManager;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 /// MovementSystem handles direct movement commands and updates.
 /// It focuses on immediate movement controls rather than physics simulation.
 pub struct MovementSystem {
-    state_manager: Rc<StateManager>,
+    state_manager: Rc<RefCell<StateManager>>,
 }
 
 impl MovementSystem {
-    pub fn new(state_manager: Rc<StateManager>) -> Self {
+    pub fn new(state_manager: Rc<RefCell<StateManager>>) -> Self {
         Self { state_manager }
     }
 
     pub fn update(&self, delta_time: f32) {
         // Process movement commands
-        if let Ok(mut state) = self.state_manager.state.try_borrow_mut() {
+        if let Ok(mut state) = self.state_manager.borrow().state.try_borrow_mut() {
             for (&entity_id, velocity) in state.velocities.iter_mut() {
                 // Apply any direct velocity changes from commands
                 if let Some(command) = self.get_pending_movement_command(entity_id) {

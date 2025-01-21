@@ -1,6 +1,7 @@
 use crate::ecs::components::text::{HorizontalAlign, TextId, VerticalAlign};
 use crate::engine::managers::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult, Table};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 fn string_to_text_id(text: &str) -> Option<TextId> {
@@ -40,7 +41,7 @@ fn string_to_vertical_align(align: &str) -> Option<VerticalAlign> {
     }
 }
 
-pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
+pub fn register_text_api(lua: &Lua, state_manager: Rc<RefCell<StateManager>>) -> LuaResult<()> {
     // Create TEXT table to hold our text constants
     let text_constants = lua.create_table()?;
     text_constants.set("GAME_OVER", "GAME_OVER")?;
@@ -105,6 +106,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
                 }
 
                 manager
+                    .borrow_mut()
                     .add_text(entity_id, text_id, color, scale, h_align, v_align)
                     .map_err(mlua::Error::runtime)
             },
@@ -119,6 +121,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
                 .ok_or_else(|| mlua::Error::runtime("Invalid text ID"))?;
 
             manager
+                .borrow_mut()
                 .update_text(entity_id, text_id)
                 .map_err(mlua::Error::runtime)
         })?
@@ -129,6 +132,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, (entity_id, r, g, b): (u32, u8, u8, u8)| {
             manager
+                .borrow_mut()
                 .set_text_color(entity_id, (r, g, b))
                 .map_err(mlua::Error::runtime)
         })?
@@ -139,6 +143,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, (entity_id, scale): (u32, f32)| {
             manager
+                .borrow_mut()
                 .set_text_scale(entity_id, scale)
                 .map_err(mlua::Error::runtime)
         })?
@@ -149,6 +154,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, (entity_id, visible): (u32, bool)| {
             manager
+                .borrow_mut()
                 .set_text_visibility(entity_id, visible)
                 .map_err(mlua::Error::runtime)
         })?
@@ -158,6 +164,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, (entity_id, value): (u32, String)| {
             manager
+                .borrow_mut()
                 .set_text_value(entity_id, value)
                 .map_err(mlua::Error::runtime)
         })?
@@ -166,7 +173,7 @@ pub fn register_text_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResul
     let get_text = {
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |lua, entity_id: u32| -> mlua::Result<mlua::Value> {
-            match manager.get_text(entity_id) {
+            match manager.borrow().get_text(entity_id) {
                 Ok(maybe_text) => {
                     if let Some(text) = maybe_text {
                         // Convert the Text struct into a Lua table

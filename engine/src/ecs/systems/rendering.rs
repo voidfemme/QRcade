@@ -1,17 +1,18 @@
 use crate::engine::managers::state_manager::StateManager;
 use crate::engine::rendering::{Renderer, Sdl2Renderer};
 use sdl2::pixels::Color;
+use std::cell::RefCell;
 use std::rc::Rc;
 use tracing::warn;
 
 pub fn render_system(
-    state_manager: Rc<StateManager>,
+    state_manager: Rc<RefCell<StateManager>>,
     renderer: &mut Sdl2Renderer,
     scale: f32,
     debug: bool,
 ) {
     // Try to borrow the state for reading
-    if let Ok(state) = state_manager.state.try_borrow() {
+    if let Ok(state) = state_manager.borrow().state.try_borrow() {
         // First render tilemaps (they should be in the background)
         for (&_, tilemap) in &state.tilemaps {
             // Get tilemap dimensions
@@ -22,7 +23,7 @@ pub fn render_system(
                 for x in 0..tilemap.width {
                     if let Some(tile) = tilemap.get_tile(x, y) {
                         // Create a square asset for each tile
-                        if let Some(asset) = state_manager.get_asset("rectangle") {
+                        if let Some(asset) = state_manager.borrow().get_asset("rectangle") {
                             let x_pos = (x * tile_size) as i32;
                             let y_pos = (y * tile_size) as i32;
 
@@ -33,7 +34,7 @@ pub fn render_system(
                                     height: tile_size as f32,
                                 });
 
-                            state_manager.render_asset(
+                            state_manager.borrow().render_asset(
                                 asset,
                                 shape_data.as_ref(),
                                 x_pos,
@@ -53,9 +54,9 @@ pub fn render_system(
         for (&entity, transform) in &state.transforms {
             if let Some(sprite) = state.sprites.get(&entity) {
                 // Get the asset definition from the state manager
-                if let Some(asset) = state_manager.get_asset(&sprite.asset_name) {
+                if let Some(asset) = state_manager.borrow().get_asset(&sprite.asset_name) {
                     // Let the asset system handle the rendering based on the shape type
-                    state_manager.render_asset(
+                    state_manager.borrow().render_asset(
                         asset,
                         sprite.shape_data.as_ref(),
                         transform.x as i32,

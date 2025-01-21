@@ -1,15 +1,17 @@
 use crate::ecs::components::tilemap::{TilemapQuery, TilemapQueryResult};
 use crate::engine::managers::state_manager::StateManager;
 use mlua::{Lua, Result as LuaResult};
+use std::cell::RefCell;
 use std::rc::Rc;
 
-pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaResult<()> {
+pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<RefCell<StateManager>>) -> LuaResult<()> {
     // Create tilemap
     let create_tilemap = {
         let manager = Rc::clone(&state_manager);
         lua.create_function(
             move |_, (entity_id, width, height, tile_size): (u32, u32, u32, u32)| {
                 manager
+                    .borrow_mut()
                     .create_tilemap(entity_id, width, height, tile_size)
                     .map_err(mlua::Error::runtime)
             },
@@ -20,7 +22,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
     let get_tilemap = {
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |lua, entity_id: u32| {
-            match manager.get_tilemap(entity_id) {
+            match manager.borrow().get_tilemap(entity_id) {
                 Ok(Some(tilemap)) => {
                     // Create a Lua table to represent the tilemap
                     let tilemap_table = lua.create_table()?;
@@ -76,6 +78,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
                 u8,
             )| {
                 manager
+                    .borrow_mut()
                     .set_tile(entity_id, x, y, tile_id, walkable, (r, g, b))
                     .map_err(mlua::Error::runtime)
             },
@@ -87,6 +90,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, (entity_id, x, y): (u32, u32, u32)| {
             manager
+                .borrow_mut()
                 .clear_tile(entity_id, x, y)
                 .map_err(mlua::Error::runtime)
         })?
@@ -128,6 +132,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
                 };
 
                 match manager
+                    .borrow()
                     .query_tilemap(entity_id, query)
                     .map_err(mlua::Error::runtime)?
                 {
@@ -200,6 +205,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, (entity_id, x, y): (u32, u32, u32)| {
             manager
+                .borrow()
                 .is_tile_walkable(entity_id, x, y)
                 .map_err(mlua::Error::runtime)
         })?
@@ -211,6 +217,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         lua.create_function(
             move |_, (entity_id, tilemap_id, x, y): (u32, u32, f32, f32)| {
                 manager
+                    .borrow()
                     .check_position_walkable(entity_id, tilemap_id, x, y)
                     .map_err(mlua::Error::runtime)
             },
@@ -221,6 +228,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, entity_id: u32| {
             manager
+                .borrow()
                 .get_dimensions(entity_id)
                 .map_err(mlua::Error::runtime)
         })?
@@ -230,6 +238,7 @@ pub fn register_tilemap_api(lua: &Lua, state_manager: Rc<StateManager>) -> LuaRe
         let manager = Rc::clone(&state_manager);
         lua.create_function(move |_, entity_id: u32| {
             manager
+                .borrow()
                 .get_tile_size(entity_id)
                 .map_err(mlua::Error::runtime)
         })?
