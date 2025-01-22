@@ -19,6 +19,8 @@ To begin creating your game, follow these fundamental steps:
 - **[Transform API](transform_api.md):** Control position, rotation, and scale for precise entity placement.
 - **[Velocity API](velocity_api.md):** Implement smooth movement and physics-based motion.
 - **[Gravity API](gravity_api.md):** Add realistic physics with customizable gravity effects.
+- **[Timer API](timer_api.md):** Provides tools to create and manage timed events and
+  intervals in your game.
 
 ### Interaction and Input
 - **[Input API](input_api.md):** Handle keyboard and mouse input for player interaction.
